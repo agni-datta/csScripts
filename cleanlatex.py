@@ -1,7 +1,7 @@
-import os
 import logging
-from datetime import datetime
+import os
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
 
 def configure_logging(log_filename):
@@ -29,9 +29,13 @@ def delete_file(file_path, directory):
     """
     try:
         os.remove(file_path)
-        logging.info(f"Deleted: {file_path} (from directory: {directory})")
-    except Exception as e:
-        logging.error(f"Error deleting file {file_path}: {e}")
+        logging.info("Deleted: %s (from directory: %s)", file_path, directory)
+    except FileNotFoundError as e:
+        logging.error("Error deleting file %s: %s", file_path, e)
+    except PermissionError as e:
+        logging.error("Error deleting file %s: %s", file_path, e)
+    except OSError as e:
+        logging.error("Error deleting file %s: %s", file_path, e)
 
 
 def delete_files_in_directory(directory, extensions):
@@ -45,7 +49,7 @@ def delete_files_in_directory(directory, extensions):
     with ThreadPoolExecutor(
         max_workers=18
     ) as executor:  # Limiting max_workers to control resource usage
-        for root, dirs, files in os.walk(directory):
+        for root, files in os.walk(directory):
             for file in files:
                 if any(file.endswith(ext) for ext in extensions):
                     file_path = os.path.join(root, file)

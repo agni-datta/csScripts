@@ -1,10 +1,11 @@
+import datetime
+import logging
 import os
 import re
-import logging
-from typing import List, Set
-from spellchecker import SpellChecker
-import datetime
 from multiprocessing import Pool, cpu_count
+from typing import List, Set
+
+from spellchecker import SpellChecker
 
 
 def load_english_dictionary() -> Set[str]:
@@ -74,7 +75,7 @@ def sanitize_filename(filename: str) -> str:
     return re.sub(r'[\\/;:\'"`%$#@!*+=]', "", filename)
 
 
-def split_concatenated_words(filename: str, english_dictionary: Set[str]) -> str:
+def split_concatenated_words(filename: str) -> str:
     """
     Split concatenated words using the English dictionary and convert to title case.
 
@@ -195,11 +196,11 @@ def split_concatenated_words(filename: str, english_dictionary: Set[str]) -> str
         ]
     )
 
-    for i in range(len(words)):
-        if i != 0 and words[i].lower() in conjunctions_prepositions:
-            words[i] = words[i].lower()
+    for i, word in enumerate(words):
+        if i != 0 and word.lower() in conjunctions_prepositions:
+            words[i] = word.lower()
         else:
-            words[i] = words[i].title()
+            words[i] = word.title()
     # Join the words with underscores
 
     joined_filename = "_".join(words)
@@ -222,7 +223,7 @@ def rename_file(filename: str, english_dictionary: Set[str]) -> None:
     try:
         current_directory: str = os.getcwd()
         old_filename: str = os.path.join(current_directory, filename)
-        new_filename: str = split_concatenated_words(filename, english_dictionary)
+        new_filename: str = split_concatenated_words(filename)
         new_filepath = os.path.join(current_directory, new_filename)
         if old_filename != new_filepath:
             # Rename the file if the new filename is different
@@ -230,11 +231,15 @@ def rename_file(filename: str, english_dictionary: Set[str]) -> None:
             os.rename(old_filename, new_filepath)
             # Show changes to the user
 
-            logging.info(f"Renamed '{filename}' to '{new_filename}'")
+            logging.info("Renamed '%s' to '%s'", filename, new_filename)
     except FileExistsError:
-        logging.warning(f"Skipped renaming. File '{new_filename}' already exists.")
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        logging.warning("Skipped renaming. File '%s' already exists.", new_filename)
+    except FileNotFoundError as e:
+        logging.error("File not found: %s", e)
+    except PermissionError as e:
+        logging.error("Permission denied: %s", e)
+    except OSError as e:
+        logging.error("OS error occurred: %s", e)
 
 
 def rename_files_in_current_directory() -> None:
@@ -269,8 +274,12 @@ def rename_files_in_current_directory() -> None:
                 rename_file,
                 [(filename, english_dictionary) for filename in files_to_rename],
             )
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
+    except FileNotFoundError as e:
+        logging.error("File not found: %s", e)
+    except PermissionError as e:
+        logging.error("Permission denied: %s", e)
+    except OSError as e:
+        logging.error("OS error occurred: %s", e)
 
 
 if __name__ == "__main__":

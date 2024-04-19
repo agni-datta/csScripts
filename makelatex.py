@@ -1,9 +1,8 @@
+import logging
 import os
 import subprocess
-import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
 
 
 class LaTeXCompiler:
@@ -26,7 +25,7 @@ class LaTeXCompiler:
                 stderr=subprocess.STDOUT,
             )
         except subprocess.CalledProcessError as e:
-            logging.error(f"Compilation failed: {e}")
+            logging.error("Compilation failed: %s", e)
             raise RuntimeError("Failed to compile LaTeX file.") from e
 
     def check_compilation_needs(self, input_file: str) -> None:
@@ -74,7 +73,7 @@ class LaTeXCompiler:
                     stderr=subprocess.STDOUT,
                 )
         except subprocess.CalledProcessError as e:
-            logging.error(f"Error in compilation needs checking: {e}")
+            logging.error("Error in compilation needs checking: %s", e)
             raise RuntimeError("Failed to check compilation needs.") from e
 
     def clean_previous_compilation(self, input_file: str) -> None:
@@ -93,7 +92,7 @@ class LaTeXCompiler:
             )
             logging.info("Previous compilation files cleaned.")
         except subprocess.CalledProcessError as e:
-            logging.error(f"Error cleaning previous compilation files: {e}")
+            logging.error("Error cleaning previous compilation files: %s", e)
             raise RuntimeError("Failed to clean previous compilation files.") from e
 
 
@@ -132,7 +131,7 @@ class LaTeXCompilerExecutor:
 
                 compilation_task.result()
                 compilation_needs_task.result()
-        except Exception as e:
+        except Exception as _:
             logging.exception("An error occurred during multithreaded compilation:")
             raise
 
@@ -175,12 +174,14 @@ def main() -> None:
 
         end_time: float = time.time()
         logging.info(
-            f"Compilation completed successfully in {end_time - start_time:.2f} seconds."
+            "Compilation completed successfully in %.2f seconds.",
+            end_time - start_time,
         )
         print(
-            f"Compilation completed successfully in {end_time - start_time:.2f} seconds."
+            "Compilation completed successfully in %.2f seconds."
+            % (end_time - start_time)
         )
-    except Exception as e:
+    except Exception:
         logging.exception("An error occurred during compilation:")
         print("An error occurred during compilation:")
         raise
