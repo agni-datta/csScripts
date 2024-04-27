@@ -1,3 +1,37 @@
+"""
+This Python script is designed to recursively delete files
+with specified extensions in a directory. It utilizes
+ThreadPoolExecutor for concurrent file deletion and logs the deletion activities.
+
+Functions:
+1. configure_logging(log_filename):
+   - Configures logging settings.
+   - Args:
+       - log_filename (str): The filename for the log file.
+
+2. delete_file(file_path, directory):
+   - Deletes a single file.
+   - Args:
+       - file_path (str): Path to the file to be deleted.
+       - directory (str): Path to the directory from which the file is deleted.
+
+3. delete_files_in_directory(directory, extensions):
+   - Recursively deletes files with specified extensions in a directory.
+   - Args:
+       - directory (str): The directory to start the search from.
+       - extensions (list): List of file extensions to delete.
+
+4. main():
+   - Main function to execute the file deletion process.
+     - Configures logging.
+     - Defines file extensions to delete.
+     - Deletes files in the script directory and the current directory.
+   
+Main Block:
+- Calls the main() function if the script is executed as the main program.
+
+"""
+
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor

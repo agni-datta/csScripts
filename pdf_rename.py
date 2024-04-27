@@ -1,3 +1,46 @@
+"""
+This Python script is designed to rename files in a directory by splitting concatenated
+words in filenames and converting them to a more readable format. The script utilizes
+multiprocessing for improved performance.
+
+Functions:
+1. load_english_dictionary():
+   - Loads a dictionary of common English words, including additional words and Roman numerals.
+   - Returns: A set containing common English words.
+
+2. sanitize_filename(filename: str) -> str:
+   - Removes special characters from the filename using regular expressions.
+   - Args:
+       - filename (str): The filename to sanitize.
+   - Returns:
+       - str: The sanitized filename.
+
+3. split_concatenated_words(filename: str, english_dictionary: Set[str]) -> str:
+   - Splits concatenated words in a filename based on certain rules
+    using the provided English dictionary.
+   - Args:
+       - filename (str): The filename to split.
+       - english_dictionary (Set[str]): Set of common English words.
+   - Returns:
+       - str: The sanitized filename.
+
+4. rename_file(filename: str, english_dictionary: Set[str]) -> None:
+   - Renames a single file in the current directory by utilizing
+    split_concatenated_words() function.
+   - Args:
+       - filename (str): The filename to rename.
+       - english_dictionary (Set[str]): Set of common English words.
+   - Returns: None.
+
+5. rename_files_in_current_directory() -> None:
+   - Renames files in the current directory using multiprocessing for improved performance.
+   - Uses Pool from multiprocessing to distribute renaming tasks among available CPU cores.
+   - Returns: None.
+
+Main Block:
+- Calls rename_files_in_current_directory() function if the script is executed as the main program.
+"""
+
 import datetime
 import logging
 import os
@@ -75,7 +118,7 @@ def sanitize_filename(filename: str) -> str:
     return re.sub(r'[\\/;:\'"`%$#@!*+=]', "", filename)
 
 
-def split_concatenated_words(filename: str) -> str:
+def split_concatenated_words(filename: str, english_dictionary: Set[str]) -> str:
     """
     Split concatenated words using the English dictionary and convert to title case.
 
@@ -100,7 +143,8 @@ def split_concatenated_words(filename: str) -> str:
 
     base_filename, extension = os.path.splitext(filename)
 
-    # Use regular expression to split the base filename into words based on spaces, underscores, and camelCase or PascalCase conventions
+    # Use regular expression to split the base filename into words based on spaces,
+    # underscores, and camelCase or PascalCase conventions
 
     words: List[str] = re.findall(
         r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)|[^\W_]+", base_filename
@@ -154,45 +198,6 @@ def split_concatenated_words(filename: str) -> str:
             "by",
             "concerning",
             "considering",
-            "despite",
-            "down",
-            "during",
-            "except",
-            "excepting",
-            "excluding",
-            "following",
-            "from",
-            "in",
-            "inside",
-            "into",
-            "like",
-            "near",
-            "off",
-            "on",
-            "onto",
-            "out",
-            "outside",
-            "over",
-            "past",
-            "regarding",
-            "round",
-            "since",
-            "through",
-            "throughout",
-            "till",
-            "to",
-            "toward",
-            "towards",
-            "under",
-            "underneath",
-            "unlike",
-            "until",
-            "unto",
-            "up",
-            "upon",
-            "with",
-            "within",
-            "without",
         ]
     )
 
@@ -201,6 +206,13 @@ def split_concatenated_words(filename: str) -> str:
             words[i] = word.lower()
         else:
             words[i] = word.title()
+
+    # Check if each word is in the English dictionary, and if not, add it to the filename
+
+    for i, word in enumerate(words):
+        if word.lower() not in english_dictionary:
+            words[i] = word.title()
+
     # Join the words with underscores
 
     joined_filename = "_".join(words)
@@ -223,7 +235,7 @@ def rename_file(filename: str, english_dictionary: Set[str]) -> None:
     try:
         current_directory: str = os.getcwd()
         old_filename: str = os.path.join(current_directory, filename)
-        new_filename: str = split_concatenated_words(filename)
+        new_filename: str = split_concatenated_words(filename, english_dictionary)
         new_filepath = os.path.join(current_directory, new_filename)
         if old_filename != new_filepath:
             # Rename the file if the new filename is different

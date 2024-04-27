@@ -30,7 +30,8 @@ class LaTeXCompiler:
 
     def check_compilation_needs(self, input_file: str) -> None:
         """
-        Check whether auxiliary compilation tools (biber, makeglossaries, makeindex) need to be run and execute them if necessary.
+        Check whether auxiliary compilation tools (biber, makeglossaries, makeindex)
+        need to be run and execute them if necessary.
 
         Parameters:
         input_file (str): Path to the input LaTeX file.
