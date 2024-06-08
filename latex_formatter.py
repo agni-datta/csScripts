@@ -8,6 +8,7 @@ Argument Parsing: Added an argument parser to handle command-line arguments.
 --file: Specify the path to a single .tex file to process.
 --all: If this flag is set, process all .tex files in the current directory and subdirectories.
 --column-width: Specify the column width for breaking lines.
+
 Process All .tex Files: The process_all_tex_files function uses glob to find all .tex files in
 the specified directory and its subdirectories. It then processes each file using process_tex_file.
 
