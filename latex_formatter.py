@@ -94,7 +94,7 @@ def process_tex_file(file_path, column_width):
 if __name__ == "__main__":
     # Get the file name from the user
     input_file_path = input("Enter the path to the .tex file: ")
-    column_width = 80  # Adjust as needed
+    column_width = 120  # Adjust as needed
 
     try:
         process_tex_file(input_file_path, column_width)
