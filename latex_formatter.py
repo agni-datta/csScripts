@@ -1,5 +1,29 @@
+import glob
 import os
 import subprocess
+
+"""
+Argument Parsing: Added an argument parser to handle command-line arguments.
+
+--file: Specify the path to a single .tex file to process.
+--all: If this flag is set, process all .tex files in the current directory and subdirectories.
+--column-width: Specify the column width for breaking lines.
+Process All .tex Files: The process_all_tex_files function uses glob to find all .tex files in
+the specified directory and its subdirectories. It then processes each file using process_tex_file.
+
+Main Script: Depending on the arguments provided, the script will either process a single file or all .tex files in the directory.
+
+Usage:
+
+To process a single file:
+python script.py --file path/to/file.tex --column-width 80
+
+To process all .tex files in the current directory and subdirectories:
+python script.py --all --column-width 80
+
+The script will create a backup of each file with a .bak extension, overwrite the original file with the formatted content,
+and use latexindent to further format the output file.
+"""
 
 
 def break_text_to_columns(text, column_width):
@@ -91,15 +115,54 @@ def process_tex_file(file_path, column_width):
     format_with_latexindent(file_path, file_path)
 
 
-if __name__ == "__main__":
-    # Get the file name from the user
-    input_file_path = input("Enter the path to the .tex file: ")
-    column_width = 120  # Adjust as needed
+def process_all_tex_files(directory, column_width):
+    """
+    Processes all .tex files in the specified directory and its subdirectories.
 
-    try:
-        process_tex_file(input_file_path, column_width)
+    Args:
+        directory (str): The directory to search for .tex files.
+        column_width (int): The maximum number of characters per line.
+    """
+    tex_files = glob.glob(os.path.join(directory, "**", "*.tex"), recursive=True)
+    for tex_file in tex_files:
+        try:
+            process_tex_file(tex_file, column_width)
+            print(f"Processed {tex_file} successfully.")
+        except Exception as e:
+            print(f"An error occurred while processing {tex_file}: {e}")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Process .tex files by breaking text into columns and formatting with latexindent."
+    )
+    parser.add_argument("--file", help="Path to the .tex file to process.")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Process all .tex files in the current directory and subdirectories.",
+    )
+    parser.add_argument(
+        "--column-width",
+        type=int,
+        default=80,
+        help="Maximum number of characters per line.",
+    )
+    args = parser.parse_args()
+
+    if args.all:
+        process_all_tex_files(".", args.column_width)
+    elif args.file:
+        try:
+            process_tex_file(args.file, args.column_width)
+            print(
+                f"File processed successfully. A backup has been saved as {args.file}.bak"
+            )
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    else:
         print(
-            f"File processed successfully. A backup has been saved as {input_file_path}.bak"
+            "Please specify either --file to process a single file or --all to process all .tex files in the directory."
         )
-    except Exception as e:
-        print(f"An error occurred: {e}")
