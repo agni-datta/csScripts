@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 
 class TexFileCreator:
@@ -11,25 +12,29 @@ class TexFileCreator:
     front and back matter files.
 
     Attributes:
-        num_chapters (int): The number of chapter files to create.
+    ----------
+    num_chapters : int
+        The number of chapter files to create.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the TexFileCreator with default values.
         """
-        self.num_chapters = 0
+        self.num_chapters: int = 0
 
-    def get_num_chapters(self):
+    def get_num_chapters(self) -> int:
         """
         Prompt the user to enter the number of chapter files to create.
 
         Returns:
-            int: The number of chapter files to create.
+        -------
+        int
+            The number of chapter files to create.
         """
         while True:
             try:
-                num_chapters = int(input("Enter the number of chapters: "))
+                num_chapters: int = int(input("Enter the number of chapters: "))
                 if num_chapters < 0:
                     print("Please enter a non-negative integer.")
                 else:
@@ -37,35 +42,40 @@ class TexFileCreator:
             except ValueError:
                 print("Invalid input. Please enter a valid integer.")
 
-    def create_tex_file(self, filename):
+    def create_tex_file(self, filename: str) -> None:
         """
         Create an empty .tex file.
 
         Args:
-            filename (str): The name of the .tex file to create.
+        ----
+        filename : str
+            The name of the .tex file to create.
         """
         with open(filename, "w"):
             pass  # No content needs to be written
 
-    def create_files(self, filenames, folder_name):
+    def create_files(self, filenames: List[str], folder_name: str) -> None:
         """
         Create empty .tex files in the specified folder.
 
         Args:
-            filenames (list): A list of filenames for .tex files.
-            folder_name (str): The name of the folder to create for the files.
+        ----
+        filenames : List[str]
+            A list of filenames for .tex files.
+        folder_name : str
+            The name of the folder to create for the files.
         """
         os.makedirs(folder_name, exist_ok=True)
         for filename in filenames:
-            filepath = os.path.join(folder_name, filename)
+            filepath: str = os.path.join(folder_name, filename)
             self.create_tex_file(filepath)
             print(f"Created empty file: {filepath}")
 
-    def create_main_file(self):
+    def create_main_file(self) -> None:
         """
         Create the main.tex file that includes all the created files.
         """
-        tex_files = []
+        tex_files: List[str] = []
         for root, _, files in os.walk("."):
             for file in files:
                 if file.endswith(".tex"):
@@ -78,33 +88,33 @@ class TexFileCreator:
             main_file.write("\\frontmatter\n")
             for tex_file in tex_files:
                 if "front-matter" in tex_file:
-                    main_file.write("\\input{" + tex_file + "}\n")
+                    main_file.write(f"\\input{{{tex_file}}}\n")
             main_file.write("\\mainmatter\n")
             for tex_file in tex_files:
                 if "main-matter" in tex_file:
-                    main_file.write("\\input{" + tex_file + "}\n")
+                    main_file.write(f"\\input{{{tex_file}}}\n")
             main_file.write("\\backmatter\n")
             for tex_file in tex_files:
                 if "back-matter" in tex_file:
-                    main_file.write("\\input{" + tex_file + "}\n")
+                    main_file.write(f"\\input{{{tex_file}}}\n")
             main_file.write("\\bibliographystyle{plain}\n")
             main_file.write("\\bibliography{bibliography}\n")
             main_file.write("\\end{document}\n")
 
-    def create_bibliography_file(self):
+    def create_bibliography_file(self) -> None:
         """
         Create the bibliography.bib file.
         """
         self.create_tex_file("bibliography.bib")
 
-    def run(self):
+    def run(self) -> None:
         """
         Create the organized structure of empty .tex files, the main.tex file, and bibliography.bib.
         """
         self.num_chapters = self.get_num_chapters()
 
-        folders = ["main-matter", "front-matter", "back-matter"]
-        files_front = [
+        folders: List[str] = ["main-matter", "front-matter", "back-matter"]
+        files_front: List[str] = [
             "colophon.tex",
             "preface.tex",
             "foreword.tex",
@@ -113,7 +123,12 @@ class TexFileCreator:
             "dedication.tex",
             "epigraph.tex",
         ]
-        files_back = ["appendix.tex", "listings.tex", "glossaries.tex", "acronyms.tex"]
+        files_back: List[str] = [
+            "appendix.tex",
+            "listings.tex",
+            "glossaries.tex",
+            "acronyms.tex",
+        ]
 
         for folder in folders:
             if folder == "main-matter" and self.num_chapters > 0:

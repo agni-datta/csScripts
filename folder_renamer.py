@@ -1,83 +1,92 @@
-"""
-This script renames folders in the directory where the script is located by moving articles 
-("A", "An", "The") from the start of the folder name to the end, and logs the changes to a log file.
-
-For example:
-- Folder "A Beautiful Mind" would be renamed to "Beautiful Mind, A".
-- Folder "The Matrix" would be renamed to "Matrix, The".
-- Folder "An Unexpected Journey" would be renamed to "Unexpected Journey, An".
-
-A log file named <root folder>.log is created in the root folder to record the operations.
-
-Usage:
-- Place this script in the directory you want to process and run it.
-"""
-
 import logging
 import os
 from pathlib import Path
+from typing import Set
 
 
-def setup_logging(directory):
-    # Define the log file name based on the root folder name
+class FolderRenamer:
+    """
+    A class that renames folders by moving articles ('A', 'An', 'The') from the start
+    of the folder name to the end and logs the changes.
 
-    log_file = directory / f"{directory.name}.log"
+    Attributes:
+    ----------
+    articles : Set[str]
+        A set of articles to be moved to the end of folder names.
+    directory : Path
+        The directory where the script is located and where the renaming occurs.
+    log_file : Path
+        The log file to record the renaming operations.
+    """
 
-    # Set up the logging configuration
+    def __init__(self) -> None:
+        """
+        Initialize the FolderRenamer with the directory path and articles set.
+        """
+        self.articles: Set[str] = {"A", "An", "The"}
+        self.directory: Path = Path(__file__).parent.resolve()
+        self.log_file: Path = self.setup_logging()
 
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    return log_file
+    def setup_logging(self) -> Path:
+        """
+        Set up logging configuration for the renaming process.
 
+        Returns:
+        -------
+        Path
+            The path to the log file where operations are recorded.
+        """
+        log_file: Path = self.directory / f"{self.directory.name}.log"
+        logging.basicConfig(
+            filename=log_file,
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        return log_file
 
-def rename_folders_in_directory():
-    # Define articles that should be moved to the end
+    def rename_folder(self, folder_name: str) -> None:
+        """
+        Rename a single folder if its name starts with an article.
 
-    articles = {"A", "An", "The"}
+        Args:
+        ----
+        folder_name : str
+            The current name of the folder to be renamed.
+        """
+        full_path: Path = self.directory / folder_name
+        words: list[str] = folder_name.split()
 
-    # Get the directory where the script is located
+        if words[0] in self.articles:
+            new_folder_name: str = f"{' '.join(words[1:])}, {words[0]}"
+            new_full_path: Path = self.directory / new_folder_name
 
-    directory = Path(__file__).parent.resolve()
-
-    # Setup logging
-
-    log_file = setup_logging(directory)
-    logging.info("Starting folder renaming process.")
-
-    # Iterate through all items in the directory
-
-    for folder_name in os.listdir(directory):
-        full_path = directory / folder_name
-
-        # Ensure the item is a directory
-
-        if full_path.is_dir():
-            words = folder_name.split()
-
-            # Check if the first word is an article
-
-            if words[0] in articles:
-                # Create the new folder name by moving the article to the end
-
-                new_folder_name = f"{' '.join(words[1:])}, {words[0]}"
-                new_full_path = directory / new_folder_name
-
-                # Rename the folder
-
-                full_path.rename(new_full_path)
-                logging.info(f"Renamed '{folder_name}' to '{new_folder_name}'")
-            else:
-                logging.info(f"No change for '{folder_name}'")
+            full_path.rename(new_full_path)
+            logging.info(f"Renamed '{folder_name}' to '{new_folder_name}'")
         else:
-            logging.info(f"'{folder_name}' is not a directory, skipping.")
-    logging.info("Folder renaming process completed.")
+            logging.info(f"No change for '{folder_name}'")
 
+    def rename_folders_in_directory(self) -> None:
+        """
+        Rename all folders in the directory by applying the article-moving rule.
+        """
+        logging.info("Starting folder renaming process.")
+        for folder_name in os.listdir(self.directory):
+            full_path: Path = self.directory / folder_name
 
-# Run the function
+            if full_path.is_dir():
+                self.rename_folder(folder_name)
+            else:
+                logging.info(f"'{folder_name}' is not a directory, skipping.")
+        logging.info("Folder renaming process completed.")
+
+    def run(self) -> None:
+        """
+        Execute the folder renaming process.
+        """
+        self.rename_folders_in_directory()
+
 
 if __name__ == "__main__":
-    rename_folders_in_directory()
+    renamer = FolderRenamer()
+    renamer.run()
