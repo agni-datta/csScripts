@@ -21,9 +21,8 @@ class SearchCriteria:
             root_directory (str): The root directory to start the search from.
             search_string (str): The string to search for in file and folder names.
         """
-        self.root_directory = root_directory
-        # Compile the search string into a case-insensitive regex pattern
-        self.pattern = re.compile(re.escape(search_string), re.IGNORECASE)
+        self.root_directory: str = root_directory
+        self.pattern: re.Pattern = re.compile(re.escape(search_string), re.IGNORECASE)
 
 
 class FileSearcher:
@@ -49,8 +48,8 @@ class FileSearcher:
             Dict[str, List[str]]: A dictionary with 'folders' and 'files' as keys,
                                   each containing a list of matching paths.
         """
-        matching_files = []
-        matching_folders = []
+        matching_files: List[str] = []
+        matching_folders: List[str] = []
 
         for root, dirs, files in os.walk(criteria.root_directory):
             matching_folders.extend(
@@ -77,18 +76,18 @@ class CommandLineSearchUtility:
         """
         Initializes the CommandLineSearchUtility with a FileSearcher instance.
         """
-        self.file_searcher = FileSearcher()
+        self.file_searcher: FileSearcher = FileSearcher()
 
     def run(self) -> None:
         """
         Runs the command-line utility, prompts the user for input, and displays
         the search results.
         """
-        root_directory = input("Enter the root directory to search: ")
-        search_string = input("Enter the string to search for: ")
+        root_directory: str = input("Enter the root directory to search: ")
+        search_string: str = input("Enter the string to search for: ")
 
-        criteria = SearchCriteria(root_directory, search_string)
-        results = self.file_searcher.search(criteria)
+        criteria: SearchCriteria = SearchCriteria(root_directory, search_string)
+        results: Dict[str, List[str]] = self.file_searcher.search(criteria)
 
         self.display_results(results)
 
@@ -110,5 +109,5 @@ class CommandLineSearchUtility:
 
 
 if __name__ == "__main__":
-    cli_search_utility = CommandLineSearchUtility()
+    cli_search_utility: CommandLineSearchUtility = CommandLineSearchUtility()
     cli_search_utility.run()
