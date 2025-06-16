@@ -1,3 +1,21 @@
+"""
+PDF Batch Renamer Module
+
+This module provides tools for batch renaming PDF files in a directory or directory tree.
+It supports customizable renaming patterns, preview/dry-run mode, and logging of changes.
+
+Features:
+- Batch renaming of PDF files
+- Customizable renaming rules
+- Dry-run mode for previewing changes
+- Logging of all renaming operations
+- Error handling for file conflicts
+
+Example:
+    >>> renamer = PDFBatchRenamer()
+    >>> renamer.rename_all("/path/to/pdf/folder")
+"""
+
 import datetime
 import logging
 import os

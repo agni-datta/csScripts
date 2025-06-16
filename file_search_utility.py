@@ -1,3 +1,29 @@
+"""
+File Search Utility Module
+
+This module provides a command-line utility for searching files and directories based on
+user-specified criteria. It implements a flexible search system that can find both files
+and folders matching a given pattern.
+
+Features:
+- Case-insensitive search
+- Recursive directory traversal
+- Separate results for files and folders
+- Interactive command-line interface
+- Regular expression support
+
+The module is organized into three main classes:
+- SearchCriteria: Encapsulates search parameters
+- FileSearcher: Performs the actual search operation
+- CommandLineSearchUtility: Provides the CLI interface
+
+Example:
+    >>> utility = CommandLineSearchUtility()
+    >>> utility.run()
+    Enter the root directory to search: /path/to/search
+    Enter the string to search for: example
+"""
+
 import os
 import re
 from typing import Dict, List

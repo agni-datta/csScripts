@@ -1,3 +1,21 @@
+"""
+Book Structure Generator Module
+
+This module provides tools for creating and managing the file structure of a book project.
+It automates the creation of chapters, sections, and other organizational files needed for
+book writing and publishing workflows.
+
+Features:
+- Automated directory and file creation for book projects
+- Customizable templates for chapters and sections
+- Batch file generation
+- Command-line and library usage
+
+Example:
+    >>> generator = BookStructureGenerator()
+    >>> generator.create_structure("/path/to/book_project")
+"""
+
 import os
 from typing import List
 

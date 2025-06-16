@@ -1,3 +1,21 @@
+"""
+Git Repository Reset Module
+
+This module provides a utility for safely resetting a Git repository to a clean state.
+It automates the process of pulling the latest changes, discarding local modifications,
+and cleaning untracked files and directories.
+
+Features:
+- Automated git pull and reset
+- Cleans untracked files and directories
+- Command-line interface for repository management
+- Logging and error handling
+
+Example:
+    >>> resetter = GitRepositoryReset()
+    >>> resetter.reset_repo("/path/to/repo")
+"""
+
 import os
 import subprocess
 from typing import List

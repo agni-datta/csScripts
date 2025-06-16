@@ -1,3 +1,21 @@
+"""
+Directory Batch Renamer Module
+
+This module provides tools for batch renaming directories in a given path. It supports
+customizable renaming patterns, dry-run mode, and logging of all changes.
+
+Features:
+- Batch renaming of directories
+- Customizable renaming rules
+- Dry-run mode for previewing changes
+- Logging of all renaming operations
+- Error handling for conflicts
+
+Example:
+    >>> renamer = DirectoryBatchRenamer()
+    >>> renamer.rename_directories("/path/to/root")
+"""
+
 import logging
 import os
 from pathlib import Path

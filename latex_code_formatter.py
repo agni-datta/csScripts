@@ -1,3 +1,20 @@
+"""
+LaTeX Code Formatter Module
+
+This module provides functionality to format LaTeX source code for improved readability
+and consistency. It includes features for:
+- Indentation and whitespace normalization
+- Section and environment alignment
+- Comment formatting
+- Batch processing of multiple files
+
+The formatter can be used as a command-line tool or as a library in other Python projects.
+
+Example:
+    >>> formatter = LaTeXFormatter()
+    >>> formatter.format_file("input.tex")
+"""
+
 import argparse
 import glob
 import os

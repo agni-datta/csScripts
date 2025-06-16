@@ -1,3 +1,21 @@
+"""
+File Batch Renamer Module
+
+This module provides tools for batch renaming files in a directory. It supports
+customizable renaming patterns, dry-run mode, and logging of all changes.
+
+Features:
+- Batch renaming of files
+- Customizable renaming rules
+- Dry-run mode for previewing changes
+- Logging of all renaming operations
+- Error handling for file conflicts
+
+Example:
+    >>> renamer = FileBatchRenamer()
+    >>> renamer.rename_files("/path/to/folder")
+"""
+
 import os
 from typing import List
 

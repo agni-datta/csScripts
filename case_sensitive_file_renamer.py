@@ -1,3 +1,22 @@
+"""
+Case-Sensitive File Renamer Module
+
+This module provides advanced batch renaming capabilities for files, with special handling
+for case sensitivity. It is useful for renaming files in bulk where case changes matter
+(e.g., on case-sensitive filesystems or for codebase normalization).
+
+Features:
+- Batch renaming with case sensitivity
+- Customizable renaming patterns
+- Dry-run and preview support
+- Logging of renaming operations
+- Conflict and error handling
+
+Example:
+    >>> renamer = CaseSensitiveFileRenamer()
+    >>> renamer.rename_files("/path/to/folder")
+"""
+
 import logging
 import os
 import sys

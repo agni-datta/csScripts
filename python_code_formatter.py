@@ -1,3 +1,27 @@
+"""
+Python Code Formatter Module
+
+This module provides functionality to format Python source code according to PEP 8 standards
+and other best practices. It includes features for:
+- Code style enforcement
+- Import sorting and organization
+- Line length management
+- Whitespace standardization
+- Docstring formatting
+
+The formatter can be used both as a command-line tool and as a library in other Python
+projects. It helps maintain consistent code style across projects and teams.
+
+Dependencies:
+    - black: For code formatting
+    - isort: For import sorting
+    - autopep8: For additional style fixes
+
+Example:
+    >>> formatter = PythonFormatter()
+    >>> formatter.format_file("path/to/file.py")
+"""
+
 import os
 import subprocess
 from typing import List

@@ -1,3 +1,21 @@
+"""
+LaTeX Document Generator Module
+
+This module provides tools for generating LaTeX documents programmatically. It supports
+template-based document creation, section and content management, and batch file output.
+
+Features:
+- Automated LaTeX document generation
+- Template and section management
+- Batch file creation
+- Customizable document structure
+- Command-line and library usage
+
+Example:
+    >>> generator = LaTeXDocumentGenerator()
+    >>> generator.create_document("output.tex")
+"""
+
 import argparse
 import logging
 import os

@@ -1,3 +1,27 @@
+"""
+PostScript to PDF Converter Module
+
+This module provides functionality to convert PostScript (.ps) files to PDF format.
+It uses Ghostscript (gs) as the underlying conversion engine and includes features for:
+- Batch conversion of multiple files
+- Quality and compression settings
+- Output directory management
+- Progress tracking
+- Error handling and logging
+
+The converter can be used both as a command-line tool and as a library in other Python
+projects. It's particularly useful for converting legacy PostScript documents to
+the more widely supported PDF format.
+
+Dependencies:
+    - Ghostscript (gs): External command-line tool for PostScript processing
+    - Python standard library: os, subprocess
+
+Example:
+    >>> converter = PS2PDFConverter()
+    >>> converter.convert_file("input.ps", "output.pdf")
+"""
+
 import logging
 import os
 from pathlib import Path
