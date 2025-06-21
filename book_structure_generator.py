@@ -1,167 +1,276 @@
 """
 Book Structure Generator Module
 
-This module provides tools for creating and managing the file structure of a book project.
+This module provides tools for creating and managing the file structure of a LaTeX book project.
 It automates the creation of chapters, sections, and other organizational files needed for
-book writing and publishing workflows.
+academic book writing and publishing workflows.
 
 Features:
-- Automated directory and file creation for book projects
-- Customizable templates for chapters and sections
-- Batch file generation
-- Command-line and library usage
+- Automated directory and file creation for LaTeX book projects
+- Customizable templates for chapters and sections with front/back matter
+- Interactive and batch file generation modes
+- Command-line interface and library usage
+- Modular bibliography file generation
+- LaTeX document structure with proper matter separation
 
 Example:
     >>> generator = BookStructureGenerator()
-    >>> generator.create_structure("/path/to/book_project")
+    >>> generator.run()  # Interactive mode
+    >>> # Or use as library:
+    >>> config = BookStructureConfig(chapters=10)
+    >>> generator = BookStructureGenerator()
+    >>> generator.config = config
+    >>> generator.run()
 """
 
 import os
 from typing import List
+from dataclasses import dataclass, field
 
 
-class TexFileCreator:
+@dataclass
+class FileGroup:
     """
-    A class for creating an organized structure of empty .tex files for book writing.
+    Represents a logical group of .tex files under a common directory,
+    such as front-matter or back-matter sections.
+    """
 
-    This class facilitates the creation of an organized structure of empty .tex files
-    following Don Knuth's logical style for writing books. It includes folders for
-    main-matter, front-matter, and back-matter, along with chapter files, and various
-    front and back matter files.
+    name: str
+    folder: str
+    files: List[str]
 
-    Attributes:
-    ----------
-    num_chapters : int
-        The number of chapter files to create.
+    def paths(self) -> List[str]:
+        """
+        Compute full file paths relative to folder.
+
+        Returns:
+            List[str]: List of full paths to each file in the group.
+        """
+        return list(map(lambda f: os.path.join(self.folder, f), self.files))
+
+
+@dataclass
+class BookStructureConfig:
+    """
+    Configuration container for book generation parameters,
+    including chapter count and matter file groups.
+    """
+
+    chapters: int = 0
+    manual: bool = False
+    front: FileGroup = field(
+        default_factory=lambda: FileGroup(
+            "front",
+            "front-matter",
+            [
+                "half_title.tex",
+                "series_page.tex",
+                "cover_page.tex",
+                "frontispiece.tex",
+                "title_page.tex",
+                "copyright_page.tex",
+                "dedication.tex",
+                "epigraph.tex",
+                "endorsements.tex",
+                "table_of_contents.tex",
+                "list_of_illustrations.tex",
+                "list_of_tables.tex",
+                "list_of_figures.tex",
+                "list_of_algorithms.tex",
+                "foreword.tex",
+                "preface.tex",
+                "acknowledgements.tex",
+                "introduction.tex",
+                "list_of_abbreviations.tex",
+            ],
+        )
+    )
+    back: FileGroup = field(
+        default_factory=lambda: FileGroup(
+            "back",
+            "back-matter",
+            [
+                "appendix.tex",
+                "glossary.tex",
+                "notes.tex",
+                "endnotes.tex",
+                "bibliography.tex",
+                "references.tex",
+                "index.tex",
+                "author_bio.tex",
+                "contributors.tex",
+                "colophon.tex",
+                "errata.tex",
+                "afterword.tex",
+                "marketing_blurb.tex",
+                "other_works.tex",
+                "contact_info.tex",
+            ],
+        )
+    )
+
+    def chapter_files(self) -> List[str]:
+        """
+        Generate .tex filenames for chapters.
+
+        Returns:
+            List[str]: List of chapter filenames.
+        """
+        return [f"chapter_{i:02d}.tex" for i in range(1, self.chapters + 1)]
+
+
+class BookStructureGenerator:
+    """
+    BookStructureGenerator builds a LaTeX textbook structure using
+    modular, selectable front, main, and back matter files.
     """
 
     def __init__(self) -> None:
         """
-        Initialize the TexFileCreator with default values.
+        Initialize the generator with a default configuration.
         """
-        self.num_chapters: int = 0
+        self.config = BookStructureConfig()
 
-    def get_num_chapters(self) -> int:
+    def prompt_mode(self) -> None:
         """
-        Prompt the user to enter the number of chapter files to create.
+        Ask the user whether to enter manual file selection mode.
+        """
+        self.config.manual = (
+            input("Enter 'm' for manual selection or press enter for full generation: ")
+            .strip()
+            .lower()
+            == "m"
+        )
 
-        Returns:
-        -------
-        int
-            The number of chapter files to create.
+    def prompt_chapter_count(self) -> None:
+        """
+        Prompt user to specify the number of chapters.
         """
         while True:
             try:
-                num_chapters: int = int(input("Enter the number of chapters: "))
-                if num_chapters < 0:
-                    print("Please enter a non-negative integer.")
-                else:
-                    return num_chapters
+                n = int(input("Enter number of chapters: "))
+                if n >= 0:
+                    self.config.chapters = n
+                    return
+                print("Must be non-negative.")
             except ValueError:
-                print("Invalid input. Please enter a valid integer.")
+                print("Invalid input")
 
-    def create_tex_file(self, filename: str) -> None:
+    def prompt_files(self, group: FileGroup) -> List[str]:
         """
-        Create an empty .tex file.
-
-        Args:
-        ----
-        filename : str
-            The name of the .tex file to create.
-        """
-        with open(filename, "w"):
-            pass  # No content needs to be written
-
-    def create_files(self, filenames: List[str], folder_name: str) -> None:
-        """
-        Create empty .tex files in the specified folder.
+        Interactively select files from a FileGroup.
 
         Args:
-        ----
-        filenames : List[str]
-            A list of filenames for .tex files.
-        folder_name : str
-            The name of the folder to create for the files.
-        """
-        os.makedirs(folder_name, exist_ok=True)
-        for filename in filenames:
-            filepath: str = os.path.join(folder_name, filename)
-            self.create_tex_file(filepath)
-            print(f"Created empty file: {filepath}")
+            group (FileGroup): The file group to prompt for inclusion.
 
-    def create_main_file(self) -> None:
+        Returns:
+            List[str]: The list of selected filenames.
         """
-        Create the main.tex file that includes all the created files.
-        """
-        tex_files: List[str] = []
-        for root, _, files in os.walk("."):
-            for file in files:
-                if file.endswith(".tex"):
-                    tex_files.append(os.path.join(root, file))
+        print(f"\nSelect {group.name}-matter files (y/n):")
+        return list(
+            filter(
+                lambda f: input(f"Include {f}? [y/N]: ").strip().lower() == "y",
+                group.files,
+            )
+        )
 
-        with open("main.tex", "w") as main_file:
-            main_file.write("\\documentclass{book}\n")
-            main_file.write("\\usepackage{csbook}\n")
-            main_file.write("\\begin{document}\n")
-            main_file.write("\\frontmatter\n")
-            for tex_file in tex_files:
-                if "front-matter" in tex_file:
-                    main_file.write(f"\\input{{{tex_file}}}\n")
-            main_file.write("\\mainmatter\n")
-            for tex_file in tex_files:
-                if "main-matter" in tex_file:
-                    main_file.write(f"\\input{{{tex_file}}}\n")
-            main_file.write("\\backmatter\n")
-            for tex_file in tex_files:
-                if "back-matter" in tex_file:
-                    main_file.write(f"\\input{{{tex_file}}}\n")
-            main_file.write("\\bibliographystyle{plain}\n")
-            main_file.write("\\bibliography{bibliography}\n")
-            main_file.write("\\end{document}\n")
+    def create_empty_files(self, paths: List[str]) -> None:
+        """
+        Create a list of empty .tex files at given paths.
 
-    def create_bibliography_file(self) -> None:
+        Args:
+            paths (List[str]): List of file paths to create.
         """
-        Create the bibliography.bib file.
+        list(map(self._touch, paths))
+
+    def _touch(self, filepath: str) -> None:
         """
-        self.create_tex_file("bibliography.bib")
+        Create a single empty file, ensuring parent directory exists.
+
+        Args:
+            filepath (str): The file path to create.
+        """
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "w"):
+            pass
+        print(f"Created {filepath}")
+
+    def generate_main_tex(
+        self, front: List[str], chapters: List[str], back: List[str]
+    ) -> None:
+        """
+        Generate the `main.tex` file including all document parts.
+
+        Args:
+            front (List[str]): Front-matter files.
+            chapters (List[str]): Main chapter files.
+            back (List[str]): Back-matter files.
+        """
+        with open("main.tex", "w") as f:
+            write = f.write
+            write("\\documentclass{book}\n")
+            write("\\usepackage{csbook}\n")
+            write("\\begin{document}\n")
+            write("\\frontmatter\n")
+            list(map(lambda name: write(f"\\input{{front-matter/{name}}}\n"), front))
+            write("\\mainmatter\n")
+            list(map(lambda name: write(f"\\input{{main-matter/{name}}}\n"), chapters))
+            write("\\backmatter\n")
+            list(map(lambda name: write(f"\\input{{back-matter/{name}}}\n"), back))
+            write("\\bibliographystyle{plain}\n")
+            write(
+                "\\bibliography{references,further_reading,bibliography,additional,manual}\n"
+            )
+            write("\\end{document}\n")
+        print("Generated main.tex")
+
+    def generate_bib_files(self) -> None:
+        """
+        Generate multiple structured .bib files for modular citation management.
+        """
+        bib_files = [
+            "references.bib",
+            "further_reading.bib",
+            "bibliography.bib",
+            "additional.bib",
+            "manual.bib",
+        ]
+        for bib in bib_files:
+            with open(bib, "w"):
+                pass
+            print(f"Created {bib}")
 
     def run(self) -> None:
         """
-        Create the organized structure of empty .tex files, the main.tex file, and bibliography.bib.
+        Run the interactive generation process based on user input.
         """
-        self.num_chapters = self.get_num_chapters()
+        self.prompt_mode()
+        self.prompt_chapter_count()
 
-        folders: List[str] = ["main-matter", "front-matter", "back-matter"]
-        files_front: List[str] = [
-            "colophon.tex",
-            "preface.tex",
-            "foreword.tex",
-            "acknowledgements.tex",
-            "title_page.tex",
-            "dedication.tex",
-            "epigraph.tex",
-        ]
-        files_back: List[str] = [
-            "appendix.tex",
-            "listings.tex",
-            "glossaries.tex",
-            "acronyms.tex",
-        ]
+        front_files = (
+            self.prompt_files(self.config.front)
+            if self.config.manual
+            else self.config.front.files
+        )
+        back_files = (
+            self.prompt_files(self.config.back)
+            if self.config.manual
+            else self.config.back.files
+        )
+        chapter_files = self.config.chapter_files()
 
-        for folder in folders:
-            if folder == "main-matter" and self.num_chapters > 0:
-                self.create_files(
-                    [f"chapter{i}.tex" for i in range(1, self.num_chapters + 1)], folder
-                )
-            elif folder == "front-matter":
-                self.create_files(files_front, folder)
-            elif folder == "back-matter":
-                self.create_files(files_back, folder)
-
-        self.create_main_file()
-        self.create_bibliography_file()
+        self.create_empty_files(
+            list(map(lambda f: os.path.join("main-matter", f), chapter_files))
+        )
+        self.create_empty_files(
+            list(map(lambda f: os.path.join("front-matter", f), front_files))
+        )
+        self.create_empty_files(
+            list(map(lambda f: os.path.join("back-matter", f), back_files))
+        )
+        self.generate_bib_files()
+        self.generate_main_tex(front_files, chapter_files, back_files)
 
 
 if __name__ == "__main__":
-    tex_creator = TexFileCreator()
-    tex_creator.run()
+    BookStructureGenerator().run()
