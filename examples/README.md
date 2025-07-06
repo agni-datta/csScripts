@@ -1,3 +1,11 @@
+---
+title: Examples
+linter-yaml-title-alias: Examples
+date created: Sunday, July 6th 2025, 01:33:23
+date modified: Sunday, July 6th 2025, 01:42:13
+aliases: Examples
+---
+
 # Examples
 
 This folder contains example scripts and usage demonstrations for the csScripts project. Use these examples to learn how to use the various tools and scripts provided in the repository.

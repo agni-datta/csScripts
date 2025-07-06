@@ -1,3 +1,11 @@
+---
+title: Contributing to csScripts
+linter-yaml-title-alias: Contributing to csScripts
+date created: Sunday, July 6th 2025, 01:24:57
+date modified: Sunday, July 6th 2025, 01:42:10
+aliases: Contributing to csScripts
+---
+
 # Contributing to csScripts
 
 Thank you for your interest in contributing to csScripts! This document provides guidelines and information for contributors.
@@ -11,7 +19,7 @@ Before creating an issue, please:
 1. **Search existing issues** to avoid duplicates
 2. **Use the issue template** and provide detailed information
 3. **Include system information** (OS, Python version, etc.)
-4. **Provide reproducible steps** if it's a bug
+4. **Provide reproducible steps** if it’s a bug
 
 ### Suggesting Features
 
@@ -179,7 +187,7 @@ if __name__ == "__main__":
 - **Docstrings**: Every function and class must have docstrings
 - **Type hints**: All functions must have type annotations
 - **README updates**: Update relevant sections in README.md
-- **Examples**: Provide usage examples in the script's docstring
+- **Examples**: Provide usage examples in the script’s docstring
 
 ## Pull Request Process
 
@@ -207,7 +215,7 @@ if __name__ == "__main__":
 ### Pull Request Guidelines
 
 1. **Use descriptive titles** that explain the change
-2. **Reference issues** using keywords (e.g., "Fixes #123")
+2. **Reference issues** using keywords (e.g., “Fixes #123”)
 3. **Provide a clear description** of what the PR does
 4. **Include tests** for new functionality
 5. **Update documentation** as needed

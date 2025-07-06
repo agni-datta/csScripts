@@ -1,3 +1,11 @@
+---
+title: Documentation
+linter-yaml-title-alias: Documentation
+date created: Sunday, July 6th 2025, 01:33:17
+date modified: Sunday, July 6th 2025, 01:42:13
+aliases: Documentation
+---
+
 # Documentation
 
 This folder contains documentation for the csScripts project. You can add detailed guides, API documentation, and usage instructions for each script or module here.

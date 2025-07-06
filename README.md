@@ -1,7 +1,17 @@
+---
+title: csScripts
+linter-yaml-title-alias: csScripts
+date created: Friday, February 21st 2025, 18:44:48
+date modified: Sunday, July 6th 2025, 01:42:10
+aliases: csScripts
+---
+
 # csScripts
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A comprehensive collection of utility scripts for academic and research workflows, focusing on LaTeX document management, file operations, and productivity automation.
