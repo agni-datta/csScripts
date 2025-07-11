@@ -59,7 +59,7 @@ setup(
     entry_points={
         "console_scripts": [
             "cs-book-generator=scripts.document.book_structure_generator:main",
-            "cs-latex-cleaner=scripts.document.latex_cleaner:main",
+            "csLaTeXCleaner=scripts.document.latex_cleaner:main",
             "cs-file-renamer=scripts.file_ops.file_batch_renamer:main",
             "cs-pdf-renamer=scripts.file_ops.pdf_batch_renamer:main",
         ],
