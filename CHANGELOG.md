@@ -1,11 +1,21 @@
+---
+title: CHANGELOG
+aliases: CHANGELOG
+linter-yaml-title-alias: CHANGELOG
+date created: Friday, July 11th 2025, 18:56:29
+date modified: Thursday, July 17th 2025, 22:39:59
+---
+
+# CHANGELOG
+
 - docs(README): Standardize README.md structure, update metadata, and improve clarity. NEI: Unified documentation, improved maintainability, and user experience. (Agni Datta, 2025-07-11)
 - Updated readme files. (Agni Datta, 2025-07-06)
 - Restructure project and add documentation, examples, and setup (Agni Datta, 2025-07-06)
-- Update .gitignore for Python and LaTeX projects (Agni Datta, 2025-07-06)
-- Remove .DS_Store file from repository (Agni Datta, 2025-07-06)
+- Update.gitignore for Python and LaTeX projects (Agni Datta, 2025-07-06)
+- Remove.DS_Store file from repository (Agni Datta, 2025-07-06)
 - Update book_structure_generator.py (Agni Datta, 2025-06-21)
 - Delete super-linter.yml (Agni Datta, 2025-06-19)
-- Update .gitignore (Agni Datta, 2025-06-16)
+- Update.gitignore (Agni Datta, 2025-06-16)
 - Renamed and formatted a lot of files. (Agni Datta, 2025-06-16)
 - Update README.md (Agni Datta, 2025-06-14)
 - Update README.md (Agni Datta, 2025-02-22)
