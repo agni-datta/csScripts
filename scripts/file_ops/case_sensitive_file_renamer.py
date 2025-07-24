@@ -13,316 +13,370 @@ Features:
 - Conflict and error handling
 
 Example:
-    >>> renamer = CaseSensitiveFileRenamer()
-    >>> renamer.rename_files("/path/to/folder")
+    >>> service = FilenameCaseTransformationService()
+    >>> service.execute_transformation_process()
 """
 
 import logging
 import os
 import sys
 from datetime import datetime
-from typing import List, Union
+from typing import Dict, List, Protocol, Type
 
 from titlecase import titlecase
 
 
-class UpperCaseFileHandler:
-    """Handler for transforming filenames to uppercase."""
+class FilenameTransformationStrategy(Protocol):
+    """Protocol defining the interface for filename transformation strategies."""
 
     @staticmethod
-    def process_file(filename: str) -> str:
-        """Convert the provided filename to uppercase.
+    def transform_filename(filename: str) -> str:
+        """Transform a filename according to the strategy."""
+        ...
+
+
+class UppercaseTransformationStrategy:
+    """Strategy for transforming filenames to uppercase."""
+
+    @staticmethod
+    def transform_filename(filename: str) -> str:
+        """Transform the provided filename to uppercase.
 
         Args:
-            filename (str): The name of the file to convert.
+            filename: The name of the file to transform.
 
         Returns:
-            str: The filename transformed to uppercase.
+            The filename transformed to uppercase.
         """
-        name, ext = os.path.splitext(filename)
-        return f"{name.upper()}{ext}"
+        name_part, extension_part = os.path.splitext(filename)
+        return f"{name_part.upper()}{extension_part}"
 
 
-class LowerCaseFileHandler:
-    """Handler for transforming filenames to lowercase."""
+class LowercaseTransformationStrategy:
+    """Strategy for transforming filenames to lowercase."""
 
     @staticmethod
-    def process_file(filename: str) -> str:
-        """Convert the provided filename to lowercase.
+    def transform_filename(filename: str) -> str:
+        """Transform the provided filename to lowercase.
 
         Args:
-            filename (str): The name of the file to convert.
+            filename: The name of the file to transform.
 
         Returns:
-            str: The filename transformed to lowercase.
+            The filename transformed to lowercase.
         """
-        name, ext = os.path.splitext(filename)
-        return f"{name.lower()}{ext}"
+        name_part, extension_part = os.path.splitext(filename)
+        return f"{name_part.lower()}{extension_part}"
 
 
-class TitleCaseFileHandler:
-    """Handler for transforming filenames to title case."""
+class TitlecaseTransformationStrategy:
+    """Strategy for transforming filenames to title case."""
 
     @staticmethod
-    def process_file(filename: str) -> str:
-        """Convert the provided filename to title case.
+    def transform_filename(filename: str) -> str:
+        """Transform the provided filename to title case.
 
         Args:
-            filename (str): The name of the file to convert.
+            filename: The name of the file to transform.
 
         Returns:
-            str: The filename transformed to title case.
+            The filename transformed to title case.
         """
-        name, ext = os.path.splitext(filename)
-        title_cased_name = titlecase(name)
-        return f"{title_cased_name}{ext}"
+        name_part, extension_part = os.path.splitext(filename)
+        title_cased_name_part = titlecase(name_part)
+        return f"{title_cased_name_part}{extension_part}"
 
 
-class UnderscoreFileHandler:
-    """Handler for replacing spaces in filenames with underscores."""
+class UnderscoreTransformationStrategy:
+    """Strategy for replacing spaces in filenames with underscores."""
 
     @staticmethod
-    def process_file(filename: str) -> str:
+    def transform_filename(filename: str) -> str:
         """Replace spaces with underscores in the provided filename.
 
         Args:
-            filename (str): The name of the file to convert.
+            filename: The name of the file to transform.
 
         Returns:
-            str: The filename with spaces replaced by underscores.
+            The filename with spaces replaced by underscores.
         """
-        name, ext = os.path.splitext(filename)
-        return f"{name.replace(' ', '_')}{ext}"
+        name_part, extension_part = os.path.splitext(filename)
+        return f"{name_part.replace(' ', '_')}{extension_part}"
 
 
-class SpaceFileHandler:
-    """Handler for replacing underscores in filenames with spaces."""
+class SpaceTransformationStrategy:
+    """Strategy for replacing underscores in filenames with spaces."""
 
     @staticmethod
-    def process_file(filename: str) -> str:
+    def transform_filename(filename: str) -> str:
         """Replace underscores with spaces in the provided filename.
 
         Args:
-            filename (str): The name of the file to convert.
+            filename: The name of the file to transform.
 
         Returns:
-            str: The filename with underscores replaced by spaces.
+            The filename with underscores replaced by spaces.
         """
-        name, ext = os.path.splitext(filename)
-        return f"{name.replace('_', ' ')}{ext}"
+        name_part, extension_part = os.path.splitext(filename)
+        return f"{name_part.replace('_', ' ')}{extension_part}"
 
 
-class UserInput:
-    """Class for handling user input for filename transformations."""
+class LoggingConfigurationService:
+    """Service for configuring and managing logging operations."""
 
     @staticmethod
-    def get_user_choice() -> str:
-        """Prompt the user to select a filename transformation option.
+    def configure_logging_system() -> None:
+        """Configure the logging system for the application.
 
-        This method validates the user's input and ensures it matches one of the
-        accepted options ('l', 'u', 't', 'e', or 's').
-
-        Returns:
-            str: The chosen transformation option.
-
-        Raises:
-            SystemExit: If the user provides no input or an invalid option.
+        This method sets up logging to write to a date-stamped log file,
+        capturing the time of each rename operation.
         """
-        valid_choices = ["l", "u", "t", "e", "s"]
-        choice: str = (
-            input(
-                "Enter 'l' for lowercase, 'u' for uppercase, 't' for title case, "
-                "'e' for underscores, or 's' for spaces: "
-            )
-            .strip()
-            .lower()
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        log_filename = f"{current_date}.log"
+
+        logging.basicConfig(
+            filename=log_filename,
+            level=logging.INFO,
+            format="%(asctime)s - %(message)s",
         )
 
-        if choice not in valid_choices:
-            print(f"Invalid input. Please enter one of {', '.join(valid_choices)}.")
-            sys.exit("Exiting the program due to invalid input.")
 
-        return choice
+class UserInputCollectionService:
+    """Service for collecting and validating user input."""
 
     @staticmethod
-    def get_file_extensions() -> List[str]:
-        """Prompt the user to enter file extensions for renaming.
-
-        This method collects file extensions from the user and ensures that at
-        least one extension is provided.
+    def collect_transformation_choice() -> str:
+        """Collect the user's choice of filename transformation.
 
         Returns:
-            List[str]: A list of file extensions to rename.
+            The chosen transformation option code.
 
         Raises:
-            SystemExit: If no file extensions are provided by the user.
+            SystemExit: If the user provides invalid input.
         """
-        extensions: str = input(
-            "Enter file extensions to rename (comma-separated, e.g., .txt,.md): "
-        ).strip()
+        valid_choice_options = ["l", "u", "t", "e", "s"]
+        choice_prompt = (
+            "Enter 'l' for lowercase, 'u' for uppercase, 't' for title case, "
+            "'e' for underscores, or 's' for spaces: "
+        )
 
-        if not extensions:
+        user_choice = input(choice_prompt).strip().lower()
+
+        if user_choice not in valid_choice_options:
+            print(
+                f"Invalid input. Please enter one of {', '.join(valid_choice_options)}."
+            )
+            sys.exit("Exiting the program due to invalid input.")
+
+        return user_choice
+
+    @staticmethod
+    def collect_file_extensions() -> List[str]:
+        """Collect file extensions to be processed.
+
+        Returns:
+            A list of file extensions to process.
+
+        Raises:
+            SystemExit: If no file extensions are provided.
+        """
+        extensions_prompt = (
+            "Enter file extensions to rename (comma-separated, e.g., .txt,.md): "
+        )
+        extensions_input = input(extensions_prompt).strip()
+
+        if not extensions_input:
             sys.exit("No file extensions provided. Exiting the program.")
 
-        return [ext.strip() for ext in extensions.split(",")]
+        return [extension.strip() for extension in extensions_input.split(",")]
 
 
-def configure_logging() -> None:
-    """Set up logging for the application.
+class TransformationStrategyFactory:
+    """Factory for creating filename transformation strategies."""
 
-    This function configures the logging system to write to a log file named
-    with the current date, capturing the time of each rename operation.
-    """
-    logging.basicConfig(
-        filename=f"{datetime.now().strftime('%Y-%m-%d')}.log",
-        level=logging.INFO,
-        format="%(asctime)s - %(message)s",
-    )
+    _strategy_mapping: Dict[str, Type[FilenameTransformationStrategy]] = {
+        "lower": LowercaseTransformationStrategy,
+        "upper": UppercaseTransformationStrategy,
+        "title": TitlecaseTransformationStrategy,
+        "underscore": UnderscoreTransformationStrategy,
+        "space": SpaceTransformationStrategy,
+    }
 
-
-class FileNameConverter:
-    """Class for converting filenames in a specified directory."""
-
-    def __init__(self, directory: str, handler: str, extensions: List[str]):
-        """Initialize the FileNameConverter with directory, handler, and extensions.
+    @classmethod
+    def create_strategy_from_choice(
+        cls, choice_code: str
+    ) -> FilenameTransformationStrategy:
+        """Create a transformation strategy based on the user's choice code.
 
         Args:
-            directory (str): The path of the directory containing the files.
-            handler (str): The type of handler for file processing ('upper', 'lower', 'title', 'underscore', or 'space').
-            extensions (List[str]): A list of file extensions to rename.
-        """
-        self.directory: str = directory
-        self.handler = self.get_handler(handler)
-        self.extensions = extensions
-
-    def get_handler(self, handler_type: str) -> Union[
-        UpperCaseFileHandler,
-        LowerCaseFileHandler,
-        TitleCaseFileHandler,
-        UnderscoreFileHandler,
-        SpaceFileHandler,
-    ]:
-        """Retrieve the appropriate file handler based on user choice.
-
-        Args:
-            handler_type (str): The type of handler ('upper', 'lower', 'title', 'underscore', or 'space').
+            choice_code: The code representing the user's choice ('l', 'u', 't', 'e', 's').
 
         Returns:
-            Union[UpperCaseFileHandler, LowerCaseFileHandler, TitleCaseFileHandler, UnderscoreFileHandler, SpaceFileHandler]: The corresponding handler instance.
+            The appropriate transformation strategy.
 
         Raises:
-            ValueError: If the handler type is unknown.
+            ValueError: If the choice code is invalid.
         """
-        if handler_type == "upper":
-            return UpperCaseFileHandler()
-        elif handler_type == "lower":
-            return LowerCaseFileHandler()
-        elif handler_type == "title":
-            return TitleCaseFileHandler()
-        elif handler_type == "underscore":
-            return UnderscoreFileHandler()
-        elif handler_type == "space":
-            return SpaceFileHandler()
-        else:
-            raise ValueError(f"Unknown handler type: {handler_type}")
+        strategy_type_mapping = {
+            "l": "lower",
+            "u": "upper",
+            "t": "title",
+            "e": "underscore",
+            "s": "space",
+        }
 
-    def convert_filenames(self) -> None:
-        """Convert the filenames in the specified directory.
+        if choice_code not in strategy_type_mapping:
+            raise ValueError(f"Invalid choice code: {choice_code}")
 
-        This method iterates through each file in the directory, applies the selected
-        handler to process the filename, and renames the file if applicable.
+        strategy_type = strategy_type_mapping[choice_code]
+        strategy_class = cls._strategy_mapping[strategy_type]
 
-        Raises:
-            Exception: If an error occurs during file processing.
-        """
-        print(f"Converting filenames in directory: {self.directory}")
-        try:
-            for filename in os.listdir(self.directory):
-                print(f"Found file: {filename}")
-                if not any(filename.endswith(ext) for ext in self.extensions):
-                    print(f"Skipping file: {filename} (not in specified extensions)")
-                    continue
+        return strategy_class()
 
-                new_filename: str = self.handler.process_file(filename)
-                print(f"Renaming '{filename}' to '{new_filename}'")
-                self.rename_file(filename, new_filename)
-        except Exception as e:
-            print(f"Error during filename conversion: {e}")
-            logging.error(f"Error during filename conversion: {e}")
 
-    def rename_file(self, old_name: str, new_name: str) -> None:
-        """Rename a file and log the renaming action.
+class FileOperationService:
+    """Service for performing file operations."""
+
+    @staticmethod
+    def rename_file_with_logging(
+        directory_path: str, original_filename: str, new_filename: str
+    ) -> bool:
+        """Rename a file and log the operation.
 
         Args:
-            old_name (str): The original filename.
-            new_name (str): The new filename after transformation.
+            directory_path: The directory containing the file.
+            original_filename: The original filename.
+            new_filename: The new filename.
 
-        Raises:
-            FileNotFoundError: If the original file does not exist.
-            FileExistsError: If the new filename already exists.
+        Returns:
+            True if the rename was successful, False otherwise.
         """
-        old_path: str = os.path.join(self.directory, old_name)
-        new_path: str = os.path.join(self.directory, new_name)
+        original_file_path = os.path.join(directory_path, original_filename)
+        new_file_path = os.path.join(directory_path, new_filename)
 
         try:
             # Rename the file and log the change
-            os.rename(old_path, new_path)
-            logging.info(f"Renamed '{old_name}' to '{new_name}'")
+            os.rename(original_file_path, new_file_path)
+            logging.info(f"Renamed '{original_filename}' to '{new_filename}'")
+            return True
+
         except FileNotFoundError:
-            print(f"Error: The file '{old_name}' does not exist.")
-            logging.error(f"File not found: '{old_name}'")
+            print(f"Error: The file '{original_filename}' does not exist.")
+            logging.error(f"File not found: '{original_filename}'")
+            return False
+
         except FileExistsError:
-            print(f"Error: The file '{new_name}' already exists.")
-            logging.error(f"File already exists: '{new_name}'")
-        except Exception as e:
-            print(f"Error renaming file '{old_name}' to '{new_name}': {e}")
-            logging.error(f"Error renaming file '{old_name}' to '{new_name}': {e}")
+            print(f"Error: The file '{new_filename}' already exists.")
+            logging.error(f"File already exists: '{new_filename}'")
+            return False
 
-
-class Application:
-    """Main application class to facilitate the file renaming process."""
-
-    def __init__(self):
-        """Initialize the application and configure logging."""
-        self.directory: str = os.getcwd()  # Use the current working directory
-        configure_logging()
-
-    def run(self) -> None:
-        """Execute the main logic of the application.
-
-        This method gathers user input, initializes the file converter, and
-        executes the filename conversion process.
-
-        Raises:
-            Exception: If an unexpected error occurs during the execution.
-        """
-        try:
-            choice: str = UserInput.get_user_choice()
-            handler_type: str
-
-            if choice == "l":
-                handler_type = "lower"
-            elif choice == "u":
-                handler_type = "upper"
-            elif choice == "t":
-                handler_type = "title"
-            elif choice == "e":
-                handler_type = "underscore"
-            elif choice == "s":
-                handler_type = "space"  # For the new option 's'
-            else:
-                sys.exit("Unexpected error in handler type selection.")
-
-            extensions: List[str] = UserInput.get_file_extensions()
-            converter: FileNameConverter = FileNameConverter(
-                self.directory, handler_type, extensions
+        except Exception as error:
+            print(
+                f"Error renaming file '{original_filename}' to '{new_filename}': {error}"
             )
-            converter.convert_filenames()
-        except Exception as e:
-            print(f"An error occurred while running the application: {e}")
-            logging.error(f"An error occurred while running the application: {e}")
+            logging.error(
+                f"Error renaming file '{original_filename}' to '{new_filename}': {error}"
+            )
+            return False
+
+
+class FilenameCaseTransformationService:
+    """Service for transforming filenames according to case and format rules."""
+
+    def __init__(self, target_directory_path: str = None):
+        """Initialize the FilenameCaseTransformationService.
+
+        Args:
+            target_directory_path: The directory containing files to transform.
+                                  If None, uses the current working directory.
+        """
+        self.target_directory_path = target_directory_path or os.getcwd()
+        self.logging_service = LoggingConfigurationService()
+        self.input_service = UserInputCollectionService()
+        self.file_operation_service = FileOperationService()
+        self.logging_service.configure_logging_system()
+
+    def execute_transformation_process(self) -> None:
+        """Execute the complete filename transformation process."""
+        try:
+            # Collect user input
+            transformation_choice = self.input_service.collect_transformation_choice()
+            target_file_extensions = self.input_service.collect_file_extensions()
+
+            # Create transformation strategy
+            transformation_strategy = (
+                TransformationStrategyFactory.create_strategy_from_choice(
+                    transformation_choice
+                )
+            )
+
+            # Process files
+            self._process_files_in_directory(
+                transformation_strategy, target_file_extensions
+            )
+
+        except Exception as error:
+            print(f"An error occurred while running the application: {error}")
+            logging.error(f"An error occurred while running the application: {error}")
+
+    def _process_files_in_directory(
+        self,
+        transformation_strategy: FilenameTransformationStrategy,
+        target_extensions: List[str],
+    ) -> None:
+        """Process all matching files in the directory.
+
+        Args:
+            transformation_strategy: The strategy to apply to filenames.
+            target_extensions: List of file extensions to process.
+        """
+        print(f"Transforming filenames in directory: {self.target_directory_path}")
+
+        try:
+            for filename in os.listdir(self.target_directory_path):
+                print(f"Found file: {filename}")
+
+                # Skip files that don't match target extensions
+                if not any(filename.endswith(ext) for ext in target_extensions):
+                    print(f"Skipping file: {filename} (not in specified extensions)")
+                    continue
+
+                # Transform the filename
+                transformed_filename = transformation_strategy.transform_filename(
+                    filename
+                )
+
+                # Skip if no change
+                if transformed_filename == filename:
+                    print(f"Skipping file: {filename} (no change needed)")
+                    continue
+
+                # Rename the file
+                print(f"Renaming '{filename}' to '{transformed_filename}'")
+                self.file_operation_service.rename_file_with_logging(
+                    self.target_directory_path, filename, transformed_filename
+                )
+
+        except Exception as error:
+            print(f"Error during filename transformation: {error}")
+            logging.error(f"Error during filename transformation: {error}")
+
+
+class FilenameCaseTransformationApplicationLauncher:
+    """Launcher for the filename case transformation application."""
+
+    @staticmethod
+    def launch_application() -> None:
+        """Launch the filename case transformation application."""
+        transformation_service = FilenameCaseTransformationService()
+        transformation_service.execute_transformation_process()
+
+
+def main() -> None:
+    """Main entry point for the case-sensitive file renamer script."""
+    application_launcher = FilenameCaseTransformationApplicationLauncher()
+    application_launcher.launch_application()
 
 
 if __name__ == "__main__":
-    app = Application()
-    app.run()
+    main()

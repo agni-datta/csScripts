@@ -11,199 +11,355 @@ and consistency. It includes features for:
 The formatter can be used as a command-line tool or as a library in other Python projects.
 
 Example:
-    >>> formatter = LaTeXFormatter()
-    >>> formatter.format_file("input.tex")
+    >>> formatter = LatexFormattingService()
+    >>> formatter.format_single_file("input.tex")
 """
 
 import argparse
 import glob
 import os
 import subprocess
-from typing import List
+from typing import List, Optional, Tuple
 
 
-class TexProcessor:
+class TextColumnFormattingService:
     """
-    A class to process .tex files by breaking text into columns of specified width and formatting them with latexindent.
-
-    Methods:
-    --------
-    break_text_to_columns(text: str, column_width: int) -> str:
-        Breaks the given text into lines based on the specified column width while preserving blank lines.
-
-    format_with_latexindent(input_file: str, output_file: str) -> None:
-        Formats a .tex file using latexindent.
-
-    process_tex_file(file_path: str, column_width: int) -> None:
-        Processes a .tex file by breaking its content into columns, creating a backup, and formatting it with latexindent.
-
-    process_all_tex_files(directory: str, column_width: int) -> None:
-        Processes all .tex files in the specified directory and its subdirectories.
-
-    run(file_path: str, process_all: bool, column_width: int) -> None:
-        Runs the processing based on the provided arguments.
+    Service for formatting text into columns of specified width.
     """
 
     @staticmethod
-    def break_text_to_columns(text: str, column_width: int) -> str:
+    def format_text_into_columns(input_text: str, maximum_column_width: int) -> str:
         """
-        Breaks a given text into lines based on a specified column width while preserving blank lines and existing spacing.
+        Format text into lines based on a specified column width while preserving blank lines.
 
         Args:
-        ----
-        text (str): The input text to be broken into columns.
-        column_width (int): The maximum number of characters per line.
+            input_text: The input text to be broken into columns.
+            maximum_column_width: The maximum number of characters per line.
 
         Returns:
-        -------
-        str: The text broken into lines of specified column width.
+            The text formatted into lines of specified column width.
         """
-        lines = text.splitlines()
-        broken_lines = []
+        text_lines = input_text.splitlines()
+        formatted_lines = []
 
-        for line in lines:
-            if not line.strip():  # Preserve blank lines
-                broken_lines.append("")
+        for current_line in text_lines:
+            if not current_line.strip():  # Preserve blank lines
+                formatted_lines.append("")
                 continue
 
-            words = line.split()
-            current_line = ""
+            words_in_line = current_line.split()
+            current_output_line = ""
 
-            for word in words:
-                if len(current_line) + len(word) + 1 <= column_width:
-                    if current_line:
-                        current_line += " "
-                    current_line += word
+            for word in words_in_line:
+                # Check if adding the word would exceed the column width
+                if len(current_output_line) + len(word) + 1 <= maximum_column_width:
+                    if current_output_line:  # Add space if not the first word
+                        current_output_line += " "
+                    current_output_line += word
                 else:
-                    broken_lines.append(current_line)
-                    current_line = word
+                    # Line would be too long, start a new line
+                    formatted_lines.append(current_output_line)
+                    current_output_line = word
 
-            if current_line:
-                broken_lines.append(current_line)
+            # Add the last line if there's content
+            if current_output_line:
+                formatted_lines.append(current_output_line)
 
-        return "\n".join(broken_lines)
+        return "\n".join(formatted_lines)
+
+
+class LatexIndentToolService:
+    """
+    Service for formatting LaTeX files using the latexindent tool.
+    """
 
     @staticmethod
-    def format_with_latexindent(input_file: str, output_file: str) -> None:
+    def apply_latexindent_formatting(
+        input_file_path: str, output_file_path: str
+    ) -> None:
         """
-        Formats a .tex file using latexindent.
+        Format a LaTeX file using the latexindent tool.
 
         Args:
-        ----
-        input_file (str): The path to the input .tex file.
-        output_file (str): The path to the output .tex file.
+            input_file_path: The path to the input LaTeX file.
+            output_file_path: The path to the output LaTeX file.
 
         Raises:
-        ------
-        FileNotFoundError: If the specified input .tex file does not exist.
-        subprocess.CalledProcessError: If latexindent fails to run.
+            FileNotFoundError: If the specified input LaTeX file does not exist.
+            RuntimeError: If latexindent fails to run.
         """
-        if not os.path.isfile(input_file):
-            raise FileNotFoundError(f"The file {input_file} does not exist.")
+        if not os.path.isfile(input_file_path):
+            raise FileNotFoundError(f"The file {input_file_path} does not exist.")
 
         try:
             subprocess.run(
-                ["latexindent", "--outputfile=" + output_file, input_file], check=True
+                ["latexindent", f"--outputfile={output_file_path}", input_file_path],
+                check=True,
+                capture_output=True,
             )
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"latexindent failed: {e}")
+        except subprocess.CalledProcessError as command_error:
+            raise RuntimeError(f"latexindent failed: {command_error}")
+
+
+class FileBackupService:
+    """
+    Service for creating backups of files before modification.
+    """
 
     @staticmethod
-    def process_tex_file(file_path: str, column_width: int) -> None:
+    def create_backup_file(file_path: str) -> str:
         """
-        Processes a .tex file by breaking its content into columns, creating a backup,
-        and formatting it with latexindent.
+        Create a backup of a file before modifying it.
 
         Args:
-        ----
-        file_path (str): The path to the .tex file.
-        column_width (int): The maximum number of characters per line.
+            file_path: The path to the file to back up.
+
+        Returns:
+            The path to the backup file.
 
         Raises:
-        ------
-        FileNotFoundError: If the specified .tex file does not exist.
+            FileNotFoundError: If the specified file does not exist.
         """
         if not os.path.isfile(file_path):
             raise FileNotFoundError(f"The file {file_path} does not exist.")
 
         backup_file_path = f"{file_path}.bak"
         os.rename(file_path, backup_file_path)
+        return backup_file_path
 
-        with open(backup_file_path, "r") as file:
-            content = file.read()
 
-        broken_text = TexProcessor.break_text_to_columns(content, column_width)
+class LatexFileProcessingService:
+    """
+    Service for processing LaTeX files by formatting text and applying indentation.
+    """
 
-        with open(file_path, "w") as file:
-            file.write(broken_text)
-
-        TexProcessor.format_with_latexindent(file_path, file_path)
-
-    @staticmethod
-    def process_all_tex_files(directory: str, column_width: int) -> None:
+    def __init__(self):
         """
-        Processes all .tex files in the specified directory and its subdirectories.
+        Initialize the LatexFileProcessingService with required services.
+        """
+        self.text_formatting_service = TextColumnFormattingService()
+        self.indent_tool_service = LatexIndentToolService()
+        self.backup_service = FileBackupService()
+
+    def process_single_latex_file(self, file_path: str, column_width: int) -> None:
+        """
+        Process a single LaTeX file by formatting text and applying indentation.
 
         Args:
-        ----
-        directory (str): The directory to search for .tex files.
-        column_width (int): The maximum number of characters per line.
-        """
-        tex_files = glob.glob(os.path.join(directory, "**", "*.tex"), recursive=True)
-        for tex_file in tex_files:
-            try:
-                TexProcessor.process_tex_file(tex_file, column_width)
-                print(f"Processed {tex_file} successfully.")
-            except Exception as e:
-                print(f"An error occurred while processing {tex_file}: {e}")
+            file_path: The path to the LaTeX file.
+            column_width: The maximum number of characters per line.
 
-    @staticmethod
-    def run(
-        file_path: str = None, process_all: bool = False, column_width: int = 80
+        Raises:
+            FileNotFoundError: If the specified LaTeX file does not exist.
+        """
+        # Create backup
+        backup_file_path = self.backup_service.create_backup_file(file_path)
+
+        # Read content from backup
+        with open(backup_file_path, "r") as file:
+            file_content = file.read()
+
+        # Format text into columns
+        formatted_text = self.text_formatting_service.format_text_into_columns(
+            file_content, column_width
+        )
+
+        # Write formatted text back to original file
+        with open(file_path, "w") as file:
+            file.write(formatted_text)
+
+        # Apply latexindent formatting
+        self.indent_tool_service.apply_latexindent_formatting(file_path, file_path)
+
+
+class LatexBatchProcessingService:
+    """
+    Service for batch processing multiple LaTeX files.
+    """
+
+    def __init__(self, file_processing_service: LatexFileProcessingService):
+        """
+        Initialize the LatexBatchProcessingService.
+
+        Args:
+            file_processing_service: Service for processing individual LaTeX files.
+        """
+        self.file_processing_service = file_processing_service
+
+    def process_all_latex_files_in_directory(
+        self, directory_path: str, column_width: int
+    ) -> Tuple[int, int]:
+        """
+        Process all LaTeX files in the specified directory and its subdirectories.
+
+        Args:
+            directory_path: The directory to search for LaTeX files.
+            column_width: The maximum number of characters per line.
+
+        Returns:
+            A tuple containing (successful_count, failed_count).
+        """
+        latex_file_paths = glob.glob(
+            os.path.join(directory_path, "**", "*.tex"), recursive=True
+        )
+        successful_count = 0
+        failed_count = 0
+
+        for latex_file_path in latex_file_paths:
+            try:
+                self.file_processing_service.process_single_latex_file(
+                    latex_file_path, column_width
+                )
+                print(f"Processed {latex_file_path} successfully.")
+                successful_count += 1
+            except Exception as processing_error:
+                print(
+                    f"An error occurred while processing {latex_file_path}: {processing_error}"
+                )
+                failed_count += 1
+
+        return successful_count, failed_count
+
+
+class LatexFormattingService:
+    """
+    Main service for formatting LaTeX files.
+    """
+
+    def __init__(self):
+        """
+        Initialize the LatexFormattingService with required services.
+        """
+        self.file_processing_service = LatexFileProcessingService()
+        self.batch_processing_service = LatexBatchProcessingService(
+            self.file_processing_service
+        )
+
+    def format_single_file(self, file_path: str, column_width: int = 80) -> bool:
+        """
+        Format a single LaTeX file.
+
+        Args:
+            file_path: Path to the LaTeX file to format.
+            column_width: Maximum number of characters per line.
+
+        Returns:
+            True if formatting was successful, False otherwise.
+        """
+        try:
+            self.file_processing_service.process_single_latex_file(
+                file_path, column_width
+            )
+            print(
+                f"File processed successfully. A backup has been saved as {file_path}.bak"
+            )
+            return True
+        except Exception as formatting_error:
+            print(f"An error occurred: {formatting_error}")
+            return False
+
+    def format_all_files_in_directory(
+        self, directory_path: str, column_width: int = 80
+    ) -> Tuple[int, int]:
+        """
+        Format all LaTeX files in a directory.
+
+        Args:
+            directory_path: Path to the directory containing LaTeX files.
+            column_width: Maximum number of characters per line.
+
+        Returns:
+            A tuple containing (successful_count, failed_count).
+        """
+        return self.batch_processing_service.process_all_latex_files_in_directory(
+            directory_path, column_width
+        )
+
+    def execute_formatting_operation(
+        self,
+        file_path: Optional[str] = None,
+        process_all: bool = False,
+        column_width: int = 80,
     ) -> None:
         """
-        Runs the processing of .tex files based on the provided arguments.
+        Execute LaTeX formatting based on the provided arguments.
 
         Args:
-        ----
-        file_path (str, optional): Path to a single .tex file to process. Defaults to None.
-        process_all (bool, optional): Flag to process all .tex files in the current directory and subdirectories. Defaults to False.
-        column_width (int, optional): Maximum number of characters per line. Defaults to 80.
+            file_path: Path to a single LaTeX file to process.
+            process_all: Flag to process all LaTeX files in the current directory and subdirectories.
+            column_width: Maximum number of characters per line.
         """
         if process_all:
-            TexProcessor.process_all_tex_files(".", column_width)
+            successful, failed = self.format_all_files_in_directory(".", column_width)
+            print(
+                f"\nProcessing complete: {successful} files successful, {failed} files failed."
+            )
         elif file_path:
-            try:
-                TexProcessor.process_tex_file(file_path, column_width)
-                print(
-                    f"File processed successfully. A backup has been saved as {file_path}.bak"
-                )
-            except Exception as e:
-                print(f"An error occurred: {e}")
+            self.format_single_file(file_path, column_width)
         else:
             print(
                 "Please specify either --file to process a single file or --all to process all .tex files in the directory."
             )
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Process .tex files by breaking text into columns and formatting with latexindent."
-    )
-    parser.add_argument("--file", help="Path to the .tex file to process.")
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Process all .tex files in the current directory and subdirectories.",
-    )
-    parser.add_argument(
-        "--column-width",
-        type=int,
-        default=80,
-        help="Maximum number of characters per line.",
-    )
-    args = parser.parse_args()
+class CommandLineArgumentParser:
+    """
+    Parser for command-line arguments.
+    """
 
-    TexProcessor.run(
-        file_path=args.file, process_all=args.all, column_width=args.column_width
-    )
+    @staticmethod
+    def parse_command_line_arguments():
+        """
+        Parse command-line arguments for the LaTeX formatter.
+
+        Returns:
+            The parsed command-line arguments.
+        """
+        parser = argparse.ArgumentParser(
+            description="Process LaTeX files by formatting text into columns and applying indentation."
+        )
+        parser.add_argument("--file", help="Path to the LaTeX file to process.")
+        parser.add_argument(
+            "--all",
+            action="store_true",
+            help="Process all LaTeX files in the current directory and subdirectories.",
+        )
+        parser.add_argument(
+            "--column-width",
+            type=int,
+            default=80,
+            help="Maximum number of characters per line.",
+        )
+        return parser.parse_args()
+
+
+class LatexFormattingApplicationLauncher:
+    """
+    Launcher for the LaTeX formatting application.
+    """
+
+    @staticmethod
+    def launch_application() -> None:
+        """
+        Launch the LaTeX formatting application.
+        """
+        # Parse command-line arguments
+        args = CommandLineArgumentParser.parse_command_line_arguments()
+
+        # Create formatting service and execute operation
+        formatting_service = LatexFormattingService()
+        formatting_service.execute_formatting_operation(
+            file_path=args.file, process_all=args.all, column_width=args.column_width
+        )
+
+
+def main() -> None:
+    """
+    Main entry point for the LaTeX code formatter script.
+    """
+    application_launcher = LatexFormattingApplicationLauncher()
+    application_launcher.launch_application()
+
+
+if __name__ == "__main__":
+    main()

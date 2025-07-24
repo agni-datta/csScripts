@@ -12,93 +12,206 @@ Features:
 - Logging and error handling
 
 Example:
-    >>> resetter = GitRepositoryReset()
-    >>> resetter.reset_repo("/path/to/repo")
+    >>> service = GitRepositoryResetService("/path/to/repo")
+    >>> service.execute_repository_reset_process()
 """
 
 import os
 import subprocess
-from typing import List
+from typing import List, Optional
 
 
-class GitManager:
+class GitRepositoryDiscoveryService:
     """
-    A class to manage git repositories by executing 'git reset --hard' and 'git pull' commands
-    in all .git directories found under a specified root directory.
+    Service for discovering Git repositories in a directory structure.
 
-    Methods:
-    --------
-    find_git_directories(root_dir: str) -> List[str]:
-        Recursively finds '.git' directories under the specified root directory.
-
-    git_reset_and_pull(directory: str) -> None:
-        Performs 'git reset --hard' and 'git pull' in the specified directory.
-
-    execute() -> None:
-        Executes the git commands in all .git directories found under the script's directory.
+    This service provides functionality to recursively search for Git repositories
+    within a specified directory hierarchy.
     """
 
-    def __init__(self, root_dir: str) -> None:
+    def discover_git_repositories(self, root_directory_path: str) -> List[str]:
         """
-        Initializes the GitManager with the root directory.
+        Recursively discover Git repositories under the specified root directory.
 
         Args:
-        ----
-        root_dir (str): The root directory to start searching for .git directories.
-        """
-        self.root_dir: str = root_dir
-        self.git_directories: List[str] = []
-
-    def find_git_directories(self) -> List[str]:
-        """
-        Recursively finds '.git' directories under the specified root directory.
+            root_directory_path: The root directory to start searching for Git repositories.
 
         Returns:
-        -------
-        List[str]: A list of absolute paths to directories containing '.git'.
+            List[str]: A list of absolute paths to directories containing '.git'.
         """
-        git_dirs: List[str] = []
-        for dirpath, _, _ in os.walk(self.root_dir):
-            if ".git" in os.listdir(dirpath):
-                git_dirs.append(os.path.abspath(dirpath))
-        self.git_directories = git_dirs
-        return git_dirs
+        discovered_repository_paths: List[str] = []
 
-    def git_reset_and_pull(self, directory: str) -> None:
+        for current_directory_path, _, _ in os.walk(root_directory_path):
+            if ".git" in os.listdir(current_directory_path):
+                discovered_repository_paths.append(
+                    os.path.abspath(current_directory_path)
+                )
+
+        return discovered_repository_paths
+
+
+class GitCommandExecutionService:
+    """
+    Service for executing Git commands on repositories.
+
+    This service provides methods to execute various Git commands on specified
+    repository directories.
+    """
+
+    def execute_hard_reset_and_pull(self, repository_directory_path: str) -> bool:
         """
-        Performs 'git reset --hard' and 'git pull' in the specified directory.
+        Execute 'git reset --hard' and 'git pull' commands in the specified repository.
 
         Args:
-        ----
-        directory (str): The directory where the git commands should be executed.
+            repository_directory_path: The directory where the Git commands should be executed.
 
-        Raises:
-        ------
-        subprocess.CalledProcessError: If an error occurs while executing the git commands.
+        Returns:
+            bool: True if commands executed successfully, False otherwise.
         """
         try:
-            subprocess.run(["git", "reset", "--hard"], cwd=directory, check=True)
-            subprocess.run(["git", "pull"], cwd=directory, check=True)
-            print(f"Git commands executed successfully in {directory}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error executing git commands in {directory}: {e}")
+            # Execute git reset --hard
+            subprocess.run(
+                ["git", "reset", "--hard"],
+                cwd=repository_directory_path,
+                check=True,
+                capture_output=True,
+            )
 
-    def execute(self) -> None:
+            # Execute git pull
+            subprocess.run(
+                ["git", "pull"],
+                cwd=repository_directory_path,
+                check=True,
+                capture_output=True,
+            )
+
+            print(f"Git commands executed successfully in {repository_directory_path}")
+            return True
+
+        except subprocess.CalledProcessError as command_error:
+            print(
+                f"Error executing git commands in {repository_directory_path}: {command_error}"
+            )
+            return False
+
+
+class OperationResultTracker:
+    """
+    Tracks the results of Git operations.
+
+    This class maintains counts of successful and failed operations
+    and provides a summary of the results.
+    """
+
+    def __init__(self):
         """
-        Executes git commands in all '.git' directories found under the root directory.
+        Initialize the OperationResultTracker with zero counts.
         """
-        self.find_git_directories()
-        for git_dir in self.git_directories:
-            self.git_reset_and_pull(git_dir)
+        self.successful_operation_count: int = 0
+        self.failed_operation_count: int = 0
+
+    def record_operation_result(self, success: bool) -> None:
+        """
+        Record the result of an operation.
+
+        Args:
+            success: Whether the operation was successful.
+        """
+        if success:
+            self.successful_operation_count += 1
+        else:
+            self.failed_operation_count += 1
+
+    def get_operation_summary(self) -> str:
+        """
+        Get a summary of the operation results.
+
+        Returns:
+            str: A formatted summary string.
+        """
+        total_operations = self.successful_operation_count + self.failed_operation_count
+
+        return (
+            f"Operation Summary:\n"
+            f"  Total repositories processed: {total_operations}\n"
+            f"  Successful operations: {self.successful_operation_count}\n"
+            f"  Failed operations: {self.failed_operation_count}"
+        )
+
+
+class GitRepositoryResetService:
+    """
+    Service for resetting Git repositories to a clean state.
+
+    This service orchestrates the process of discovering Git repositories
+    and executing reset and pull commands on them.
+    """
+
+    def __init__(self, target_directory_path: Optional[str] = None):
+        """
+        Initialize the GitRepositoryResetService.
+
+        Args:
+            target_directory_path: The directory to search for Git repositories.
+                                  If None, uses the script's directory.
+        """
+        self.target_directory_path: str = target_directory_path or os.path.dirname(
+            os.path.abspath(__file__)
+        )
+        self.repository_discovery_service = GitRepositoryDiscoveryService()
+        self.command_execution_service = GitCommandExecutionService()
+        self.result_tracker = OperationResultTracker()
+
+    def execute_repository_reset_process(self) -> None:
+        """
+        Execute the complete repository reset process.
+        """
+        # Discover Git repositories
+        discovered_repository_paths = (
+            self.repository_discovery_service.discover_git_repositories(
+                self.target_directory_path
+            )
+        )
+
+        if not discovered_repository_paths:
+            print(f"No Git repositories found under {self.target_directory_path}")
+            return
+
+        print(f"Found {len(discovered_repository_paths)} Git repositories to process")
+
+        # Process each repository
+        for repository_path in discovered_repository_paths:
+            operation_success = (
+                self.command_execution_service.execute_hard_reset_and_pull(
+                    repository_path
+                )
+            )
+            self.result_tracker.record_operation_result(operation_success)
+
+        # Display summary
+        print("\n" + self.result_tracker.get_operation_summary())
+
+
+class GitRepositoryResetApplicationLauncher:
+    """
+    Launches the Git repository reset application.
+    """
+
+    @staticmethod
+    def launch_application() -> None:
+        """
+        Launch the Git repository reset application.
+        """
+        reset_service = GitRepositoryResetService()
+        reset_service.execute_repository_reset_process()
 
 
 def main() -> None:
     """
-    Main function to execute the GitManager on the script's directory.
+    Main entry point for the Git repository reset script.
     """
-    script_directory = os.path.dirname(os.path.abspath(__file__))
-    git_manager = GitManager(script_directory)
-    git_manager.execute()
+    application_launcher = GitRepositoryResetApplicationLauncher()
+    application_launcher.launch_application()
 
 
 if __name__ == "__main__":

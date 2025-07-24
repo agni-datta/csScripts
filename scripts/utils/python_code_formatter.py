@@ -18,7 +18,7 @@ Dependencies:
     - autopep8: For additional style fixes
 
 Example:
-    >>> formatter = PythonFormatter()
+    >>> formatter = PythonCodeFormattingService()
     >>> formatter.format_file("path/to/file.py")
 """
 
@@ -27,83 +27,197 @@ import subprocess
 from typing import List
 
 
-class PythonFileFormatter:
+class PythonFileDiscoveryService:
     """
-    A class to handle finding and formatting Python files in a given directory.
+    Service for discovering Python files in a directory structure.
 
-    Attributes:
-    ----------
-    directory : str
-        The root directory where the search for Python files begins.
-
-    Methods:
-    -------
-    find_python_files() -> List[str]:
-        Recursively finds all Python files in the directory.
-
-    format_files(files: List[str]) -> None:
-        Formats the given list of Python files using Black and isort.
-
-    run() -> None:
-        Executes the process of finding and formatting Python files.
+    This service provides methods to recursively search for Python files
+    within a specified directory hierarchy.
     """
 
-    def __init__(self, directory: str):
+    def __init__(self, root_directory_path: str):
         """
-        Initializes the PythonFileFormatter with the root directory.
+        Initialize the PythonFileDiscoveryService with a root directory.
 
-        Parameters:
-        ----------
-        directory : str
-            The root directory where the search for Python files begins.
+        Args:
+            root_directory_path: The root directory where the search for Python files begins.
         """
-        self.directory: str = directory
+        self.root_directory_path: str = root_directory_path
 
-    def find_python_files(self) -> List[str]:
+    def discover_python_files_recursively(self) -> List[str]:
         """
-        Recursively finds all Python files in the given directory.
+        Recursively discover all Python files in the given directory.
 
         Returns:
-        -------
-        List[str]
-            A list of paths to Python files found in the directory.
+            List[str]: A list of absolute paths to Python files found in the directory.
         """
-        python_files: List[str] = []
-        for root, _, files in os.walk(self.directory):
-            for file in files:
-                if file.endswith(".py"):
-                    python_files.append(os.path.join(root, file))
-        return python_files
+        discovered_python_file_paths: List[str] = []
 
-    def format_files(self, files: List[str]) -> None:
-        """
-        Formats the given list of Python files using Black and isort.
+        for current_directory_path, _, file_names in os.walk(self.root_directory_path):
+            for current_file_name in file_names:
+                if current_file_name.endswith(".py"):
+                    absolute_file_path = os.path.join(
+                        current_directory_path, current_file_name
+                    )
+                    discovered_python_file_paths.append(absolute_file_path)
 
-        Parameters:
-        ----------
-        files : List[str]
-            A list of paths to Python files to format.
-        """
-        for file in files:
-            print(f"Formatting {file} with Black...")
-            subprocess.run(["black", file], check=True)
-            print(f"Sorting imports in {file} with isort...")
-            subprocess.run(["isort", file], check=True)
+        return discovered_python_file_paths
 
-    def run(self) -> None:
+
+class CodeFormattingToolExecutor:
+    """
+    Executes code formatting tools on Python files.
+
+    This class handles the execution of external formatting tools like Black and isort
+    to format Python source code according to style guidelines.
+    """
+
+    @staticmethod
+    def apply_black_formatter(target_file_path: str) -> bool:
         """
-        Executes the process of finding and formatting Python files.
+        Apply the Black code formatter to a Python file.
+
+        Args:
+            target_file_path: Path to the Python file to format.
+
+        Returns:
+            bool: True if formatting was successful, False otherwise.
         """
-        print(f"Searching for Python files in {self.directory}...")
-        python_files: List[str] = self.find_python_files()
-        if python_files:
-            print(f"Found {len(python_files)} Python files.")
-            self.format_files(python_files)
+        print(f"Formatting {target_file_path} with Black...")
+        try:
+            subprocess.run(["black", target_file_path], check=True)
+            return True
+        except subprocess.CalledProcessError:
+            print(f"Error: Black formatting failed for {target_file_path}")
+            return False
+        except FileNotFoundError:
+            print(
+                "Error: Black formatter not found. Please install it with 'pip install black'"
+            )
+            return False
+
+    @staticmethod
+    def apply_isort_formatter(target_file_path: str) -> bool:
+        """
+        Apply the isort import sorter to a Python file.
+
+        Args:
+            target_file_path: Path to the Python file to format.
+
+        Returns:
+            bool: True if import sorting was successful, False otherwise.
+        """
+        print(f"Sorting imports in {target_file_path} with isort...")
+        try:
+            subprocess.run(["isort", target_file_path], check=True)
+            return True
+        except subprocess.CalledProcessError:
+            print(f"Error: isort failed for {target_file_path}")
+            return False
+        except FileNotFoundError:
+            print("Error: isort not found. Please install it with 'pip install isort'")
+            return False
+
+
+class PythonCodeFormattingService:
+    """
+    Service for formatting Python code files.
+
+    This service orchestrates the process of discovering Python files
+    and applying code formatting tools to them.
+
+    Attributes:
+        root_directory_path: The root directory where the search for Python files begins.
+        file_discovery_service: Service for discovering Python files.
+        formatting_tool_executor: Executor for code formatting tools.
+    """
+
+    def __init__(self, root_directory_path: str):
+        """
+        Initialize the PythonCodeFormattingService with a root directory.
+
+        Args:
+            root_directory_path: The root directory where the search for Python files begins.
+        """
+        self.root_directory_path: str = root_directory_path
+        self.file_discovery_service = PythonFileDiscoveryService(root_directory_path)
+        self.formatting_tool_executor = CodeFormattingToolExecutor()
+
+    def format_multiple_files(self, target_file_paths: List[str]) -> None:
+        """
+        Format multiple Python files using Black and isort.
+
+        Args:
+            target_file_paths: List of paths to Python files to format.
+        """
+        successful_format_count = 0
+        failed_format_count = 0
+
+        for current_file_path in target_file_paths:
+            black_success = self.formatting_tool_executor.apply_black_formatter(
+                current_file_path
+            )
+            isort_success = self.formatting_tool_executor.apply_isort_formatter(
+                current_file_path
+            )
+
+            if black_success and isort_success:
+                successful_format_count += 1
+            else:
+                failed_format_count += 1
+
+        print(
+            f"\nFormatting complete: {successful_format_count} files formatted successfully, "
+            f"{failed_format_count} files had formatting errors."
+        )
+
+    def execute_formatting_process(self) -> None:
+        """
+        Execute the complete Python code formatting process.
+
+        This method discovers Python files in the specified directory
+        and applies formatting tools to them.
+        """
+        print(f"Searching for Python files in {self.root_directory_path}...")
+        discovered_python_files = (
+            self.file_discovery_service.discover_python_files_recursively()
+        )
+
+        if discovered_python_files:
+            print(f"Found {len(discovered_python_files)} Python files.")
+            self.format_multiple_files(discovered_python_files)
         else:
             print("No Python files found.")
 
 
+class FormattingApplicationLauncher:
+    """
+    Launches the Python code formatting application.
+    """
+
+    @staticmethod
+    def launch_formatting_application(target_directory_path: str = ".") -> None:
+        """
+        Launch the Python code formatting application.
+
+        Args:
+            target_directory_path: Directory containing Python files to format.
+                                   Defaults to the current directory.
+        """
+        formatting_service = PythonCodeFormattingService(target_directory_path)
+        formatting_service.execute_formatting_process()
+
+
+def main() -> None:
+    """
+    Main entry point for the Python code formatter script.
+
+    This function creates a FormattingApplicationLauncher and launches the application.
+    """
+    target_directory_path = "."  # Change this to your target directory path if needed
+    application_launcher = FormattingApplicationLauncher()
+    application_launcher.launch_formatting_application(target_directory_path)
+
+
 if __name__ == "__main__":
-    root_folder = "."  # Change this to your root folder path
-    formatter = PythonFileFormatter(root_folder)
-    formatter.run()
+    main()

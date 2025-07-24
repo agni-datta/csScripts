@@ -12,99 +12,233 @@ Features:
 - Error handling for conflicts
 
 Example:
-    >>> renamer = DirectoryBatchRenamer()
-    >>> renamer.rename_directories("/path/to/root")
+    >>> service = DirectoryBatchRenamingService()
+    >>> service.execute_renaming_process()
 """
 
 import logging
 import os
 from pathlib import Path
-from typing import Set
+from typing import Dict, List, Optional, Set
 
 
-class FolderRenamer:
+class ArticleDefinitionProvider:
     """
-    A class that renames folders by moving articles ('A', 'An', 'The') from the start
-    of the folder name to the end and logs the changes.
-
-    Attributes:
-    ----------
-    articles : Set[str]
-        A set of articles to be moved to the end of folder names.
-    directory : Path
-        The directory where the script is located and where the renaming occurs.
-    log_file : Path
-        The log file to record the renaming operations.
+    Provides definitions of articles that should be moved in directory names.
     """
 
-    def __init__(self) -> None:
+    @staticmethod
+    def get_english_articles() -> Set[str]:
         """
-        Initialize the FolderRenamer with the directory path and articles set.
-        """
-        self.articles: Set[str] = {"A", "An", "The"}
-        self.directory: Path = Path(__file__).parent.resolve()
-        self.log_file: Path = self.setup_logging()
-
-    def setup_logging(self) -> Path:
-        """
-        Set up logging configuration for the renaming process.
+        Get the set of English articles that should be moved.
 
         Returns:
-        -------
-        Path
-            The path to the log file where operations are recorded.
+            Set of English articles ('A', 'An', 'The').
         """
-        log_file: Path = self.directory / f"{self.directory.name}.log"
+        return {"A", "An", "The"}
+
+
+class LoggingConfigurationService:
+    """
+    Service for configuring and managing logging operations.
+    """
+
+    @staticmethod
+    def configure_logging_system(log_file_path: Path) -> None:
+        """
+        Configure the logging system for the application.
+
+        Args:
+            log_file_path: Path to the log file.
+        """
         logging.basicConfig(
-            filename=log_file,
+            filename=log_file_path,
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
-        return log_file
 
-    def rename_folder(self, folder_name: str) -> None:
+
+class DirectoryNameTransformationService:
+    """
+    Service for transforming directory names according to specified rules.
+    """
+
+    def __init__(self, article_provider: ArticleDefinitionProvider):
         """
-        Rename a single folder if its name starts with an article.
+        Initialize the DirectoryNameTransformationService.
 
         Args:
-        ----
-        folder_name : str
-            The current name of the folder to be renamed.
+            article_provider: Provider of article definitions.
         """
-        full_path: Path = self.directory / folder_name
-        words: list[str] = folder_name.split()
+        self.recognized_articles = article_provider.get_english_articles()
 
-        if words[0] in self.articles:
-            new_folder_name: str = f"{' '.join(words[1:])}, {words[0]}"
-            new_full_path: Path = self.directory / new_folder_name
-
-            full_path.rename(new_full_path)
-            logging.info(f"Renamed '{folder_name}' to '{new_folder_name}'")
-        else:
-            logging.info(f"No change for '{folder_name}'")
-
-    def rename_folders_in_directory(self) -> None:
+    def transform_directory_name(self, directory_name: str) -> Optional[str]:
         """
-        Rename all folders in the directory by applying the article-moving rule.
-        """
-        logging.info("Starting folder renaming process.")
-        for folder_name in os.listdir(self.directory):
-            full_path: Path = self.directory / folder_name
+        Transform a directory name by moving articles from the beginning to the end.
 
-            if full_path.is_dir():
-                self.rename_folder(folder_name)
+        Args:
+            directory_name: The current name of the directory.
+
+        Returns:
+            The transformed directory name, or None if no transformation is needed.
+        """
+        name_components = directory_name.split()
+
+        # Check if the first word is an article
+        if not name_components or name_components[0] not in self.recognized_articles:
+            return None
+
+        # Move the article to the end
+        first_article = name_components[0]
+        remaining_words = name_components[1:]
+
+        # Format: "Rest of name, Article"
+        transformed_name = f"{' '.join(remaining_words)}, {first_article}"
+
+        return transformed_name
+
+
+class FileSystemOperationService:
+    """
+    Service for performing file system operations.
+    """
+
+    @staticmethod
+    def rename_directory(current_path: Path, new_name: str) -> bool:
+        """
+        Rename a directory.
+
+        Args:
+            current_path: Current path to the directory.
+            new_name: New name for the directory.
+
+        Returns:
+            True if renaming was successful, False otherwise.
+        """
+        try:
+            new_path = current_path.parent / new_name
+            current_path.rename(new_path)
+            logging.info(f"Renamed '{current_path.name}' to '{new_name}'")
+            return True
+        except Exception as error:
+            logging.error(
+                f"Failed to rename '{current_path.name}' to '{new_name}': {error}"
+            )
+            return False
+
+    @staticmethod
+    def get_directories_in_path(directory_path: Path) -> List[Path]:
+        """
+        Get all directories in the specified path.
+
+        Args:
+            directory_path: Path to search for directories.
+
+        Returns:
+            List of paths to directories found.
+        """
+        return [entry for entry in directory_path.iterdir() if entry.is_dir()]
+
+
+class DirectoryBatchRenamingService:
+    """
+    Service for batch renaming directories according to specified rules.
+    """
+
+    def __init__(self, target_directory_path: Optional[Path] = None):
+        """
+        Initialize the DirectoryBatchRenamingService.
+
+        Args:
+            target_directory_path: Path to the directory containing directories to rename.
+                                  If None, uses the script's parent directory.
+        """
+        self.target_directory_path = (
+            target_directory_path or Path(__file__).parent.resolve()
+        )
+        self.log_file_path = (
+            self.target_directory_path / f"{self.target_directory_path.name}.log"
+        )
+
+        # Initialize component services
+        self.article_provider = ArticleDefinitionProvider()
+        self.logging_service = LoggingConfigurationService()
+        self.transformation_service = DirectoryNameTransformationService(
+            self.article_provider
+        )
+        self.file_system_service = FileSystemOperationService()
+
+        # Configure logging
+        self.logging_service.configure_logging_system(self.log_file_path)
+
+    def execute_renaming_process(self) -> None:
+        """
+        Execute the directory batch renaming process.
+        """
+        logging.info(
+            f"Starting directory renaming process in {self.target_directory_path}"
+        )
+
+        # Get all directories in the target path
+        directories = self.file_system_service.get_directories_in_path(
+            self.target_directory_path
+        )
+
+        # Track statistics
+        renamed_count = 0
+        unchanged_count = 0
+        failed_count = 0
+
+        # Process each directory
+        for directory_path in directories:
+            directory_name = directory_path.name
+            transformed_name = self.transformation_service.transform_directory_name(
+                directory_name
+            )
+
+            if transformed_name is None:
+                # No transformation needed
+                logging.info(f"No change needed for '{directory_name}'")
+                unchanged_count += 1
+                continue
+
+            # Attempt to rename the directory
+            if self.file_system_service.rename_directory(
+                directory_path, transformed_name
+            ):
+                renamed_count += 1
             else:
-                logging.info(f"'{folder_name}' is not a directory, skipping.")
-        logging.info("Folder renaming process completed.")
+                failed_count += 1
 
-    def run(self) -> None:
+        # Log summary
+        logging.info(
+            f"Directory renaming process completed: "
+            f"{renamed_count} renamed, {unchanged_count} unchanged, {failed_count} failed"
+        )
+
+
+class DirectoryBatchRenamingApplicationLauncher:
+    """
+    Launcher for the directory batch renaming application.
+    """
+
+    @staticmethod
+    def launch_application() -> None:
         """
-        Execute the folder renaming process.
+        Launch the directory batch renaming application.
         """
-        self.rename_folders_in_directory()
+        renaming_service = DirectoryBatchRenamingService()
+        renaming_service.execute_renaming_process()
+
+
+def main() -> None:
+    """
+    Main entry point for the directory batch renamer script.
+    """
+    application_launcher = DirectoryBatchRenamingApplicationLauncher()
+    application_launcher.launch_application()
 
 
 if __name__ == "__main__":
-    renamer = FolderRenamer()
-    renamer.run()
+    main()

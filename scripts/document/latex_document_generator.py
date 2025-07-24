@@ -12,8 +12,8 @@ Features:
 - Command-line and library usage
 
 Example:
-    >>> generator = LaTeXDocumentGenerator()
-    >>> generator.create_document("output.tex")
+    >>> service = LatexDocumentCompilationService()
+    >>> service.compile_document("output.tex")
 """
 
 import argparse
@@ -25,52 +25,66 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 
-class LaTeXCompilationError(Exception):
+class LatexCompilationError(Exception):
     """Custom exception for LaTeX compilation errors."""
 
+    pass
 
-class DependencyChecker:
+
+class LatexDependencyVerificationService:
     """
-    Class responsible for checking if required LaTeX tools are installed.
+    Service for verifying that required LaTeX tools are installed.
     """
 
-    def check_dependencies(self) -> None:
+    @staticmethod
+    def verify_required_tools_installed() -> List[str]:
         """
-        Check if required LaTeX tools are installed.
+        Verify that all required LaTeX tools are installed on the system.
+
+        Returns:
+            List of missing tools, empty if all tools are installed.
 
         Raises:
             EnvironmentError: If any required tools are missing.
         """
-        required_tools = ["latexmk", "biber", "makeglossaries", "makeindex"]
-        missing_tools = [tool for tool in required_tools if not shutil.which(tool)]
+        required_tool_list = ["latexmk", "biber", "makeglossaries", "makeindex"]
+        missing_tool_list = [
+            tool for tool in required_tool_list if not shutil.which(tool)
+        ]
 
-        if missing_tools:
+        if missing_tool_list:
             raise EnvironmentError(
-                f"Missing required tools: {', '.join(missing_tools)}"
+                f"Missing required LaTeX tools: {', '.join(missing_tool_list)}"
             )
 
+        return missing_tool_list
 
-class Logger:
+
+class LoggingConfigurationService:
     """
-    Class responsible for setting up and managing logging configuration.
+    Service for configuring and managing logging operations.
     """
 
-    def setup_logging(self, log_file: Path) -> None:
+    @staticmethod
+    def configure_logging_system(log_file_path: Path) -> None:
         """
-        Set up logging configuration.
+        Configure the logging system for the application.
 
-        Parameters:
-            log_file (Path): Path to the log file.
+        Args:
+            log_file_path: Path to the log file.
         """
+        # Configure file logging
         logging.basicConfig(
             level=logging.DEBUG,
-            filename=str(log_file),
+            filename=str(log_file_path),
             filemode="a",
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
+
+        # Add console handler for INFO level and above
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(
@@ -79,254 +93,347 @@ class Logger:
         logging.getLogger().addHandler(console_handler)
 
 
-class LaTeXCompiler:
+class LatexCompilationToolService:
     """
-    Class for compiling LaTeX documents and handling auxiliary compilation tasks.
+    Service for executing LaTeX compilation tools.
     """
 
-    def compile_latex(self, input_file: Path) -> None:
+    def compile_latex_document(self, input_file_path: Path) -> None:
         """
-        Compile the LaTeX input file using latexmk with synctex enabled.
+        Compile a LaTeX document using latexmk with synctex enabled.
 
-        Parameters:
-            input_file (Path): Path to the input LaTeX file.
+        Args:
+            input_file_path: Path to the input LaTeX file.
 
         Raises:
-            LaTeXCompilationError: If the LaTeX compilation fails.
+            LatexCompilationError: If the LaTeX compilation fails.
         """
         try:
             subprocess.run(
-                ["latexmk", "-pdf", "-lualatex", "-synctex=1", str(input_file)],
+                ["latexmk", "-pdf", "-lualatex", "-synctex=1", str(input_file_path)],
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
-        except subprocess.CalledProcessError as e:
-            logging.error("Compilation failed: %s", e)
-            raise LaTeXCompilationError("Failed to compile LaTeX file.") from e
+        except subprocess.CalledProcessError as compilation_error:
+            logging.error("LaTeX compilation failed: %s", compilation_error)
+            raise LatexCompilationError(
+                "Failed to compile LaTeX file."
+            ) from compilation_error
 
-    def check_compilation_needs(self, input_file: Path) -> None:
+    def execute_auxiliary_tools_if_needed(self, input_file_path: Path) -> None:
         """
-        Check whether auxiliary compilation tools (biber, makeglossaries, makeindex) need to be run and execute them if necessary.
+        Execute auxiliary LaTeX tools if needed (biber, makeglossaries, makeindex).
 
-        Parameters:
-            input_file (Path): Path to the input LaTeX file.
+        Args:
+            input_file_path: Path to the input LaTeX file.
 
         Raises:
-            LaTeXCompilationError: If the auxiliary tool execution fails.
+            LatexCompilationError: If the auxiliary tool execution fails.
         """
         try:
-            self._run_biber_if_needed(input_file)
-            self._run_makeglossaries_if_needed(input_file)
-            self._run_makeindex_if_needed(input_file)
-        except subprocess.CalledProcessError as e:
-            logging.error("Error in compilation needs checking: %s", e)
-            raise LaTeXCompilationError("Failed to check compilation needs.") from e
+            self._execute_biber_if_needed(input_file_path)
+            self._execute_makeglossaries_if_needed(input_file_path)
+            self._execute_makeindex_if_needed(input_file_path)
+        except subprocess.CalledProcessError as tool_error:
+            logging.error("Error executing auxiliary LaTeX tools: %s", tool_error)
+            raise LatexCompilationError(
+                "Failed to execute auxiliary LaTeX tools."
+            ) from tool_error
 
-    def clean_previous_compilation(self, input_file: Path) -> None:
+    def clean_compilation_artifacts(self, input_file_path: Path) -> None:
         """
-        Clean the previous compilation files using latexmk -C.
+        Clean previous compilation artifacts using latexmk -C.
 
-        Parameters:
-            input_file (Path): Path to the input LaTeX file.
+        Args:
+            input_file_path: Path to the input LaTeX file.
 
         Raises:
-            LaTeXCompilationError: If cleaning the previous compilation files fails.
+            LatexCompilationError: If cleaning the compilation artifacts fails.
         """
         try:
             subprocess.run(
-                ["latexmk", "-C", str(input_file)],
+                ["latexmk", "-C", str(input_file_path)],
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
-            logging.info("Previous compilation files cleaned.")
-        except subprocess.CalledProcessError as e:
-            logging.error("Error cleaning previous compilation files: %s", e)
-            raise LaTeXCompilationError(
-                "Failed to clean previous compilation files."
-            ) from e
+            logging.info("Previous compilation artifacts cleaned successfully.")
+        except subprocess.CalledProcessError as cleaning_error:
+            logging.error("Error cleaning compilation artifacts: %s", cleaning_error)
+            raise LatexCompilationError(
+                "Failed to clean compilation artifacts."
+            ) from cleaning_error
 
-    def _run_biber_if_needed(self, input_file: Path) -> None:
-        """Run biber if the .bbl file does not exist."""
-        bbl_file = input_file.with_suffix(".bbl")
-        if not bbl_file.exists():
-            logging.info("Running biber...")
+    def _execute_biber_if_needed(self, input_file_path: Path) -> None:
+        """Execute biber if the .bbl file does not exist."""
+        bibliography_file_path = input_file_path.with_suffix(".bbl")
+        if not bibliography_file_path.exists():
+            logging.info("Running biber for bibliography processing...")
             subprocess.run(
-                ["biber", str(input_file.with_suffix(""))],
+                ["biber", str(input_file_path.with_suffix(""))],
                 check=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
 
-    def _run_makeglossaries_if_needed(self, input_file: Path) -> None:
-        """Run makeglossaries if .gls or .acn files do not exist."""
-        glossary_files = [input_file.with_suffix(ext) for ext in [".gls", ".acn"]]
-        if not any(file.exists() for file in glossary_files):
-            logging.info("Running makeglossaries...")
+    def _execute_makeglossaries_if_needed(self, input_file_path: Path) -> None:
+        """Execute makeglossaries if .gls or .acn files do not exist."""
+        glossary_file_paths = [
+            input_file_path.with_suffix(ext) for ext in [".gls", ".acn"]
+        ]
+        if not any(file_path.exists() for file_path in glossary_file_paths):
+            logging.info("Running makeglossaries for glossary processing...")
             subprocess.run(
-                ["makeglossaries", str(input_file.with_suffix(""))],
+                ["makeglossaries", str(input_file_path.with_suffix(""))],
                 check=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
 
-    def _run_makeindex_if_needed(self, input_file: Path) -> None:
-        """Run makeindex if the .idx file does not exist."""
-        idx_file = input_file.with_suffix(".idx")
-        if not idx_file.exists():
-            logging.info("Running makeindex...")
+    def _execute_makeindex_if_needed(self, input_file_path: Path) -> None:
+        """Execute makeindex if the .idx file does not exist."""
+        index_file_path = input_file_path.with_suffix(".idx")
+        if not index_file_path.exists():
+            logging.info("Running makeindex for index processing...")
             subprocess.run(
-                ["makeindex", str(input_file.with_suffix(""))],
+                ["makeindex", str(input_file_path.with_suffix(""))],
                 check=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
 
 
-class LaTeXCompilerExecutor:
+class ParallelCompilationService:
     """
-    Class for executing LaTeX compilation and compilation needs checking tasks using multithreading.
+    Service for executing LaTeX compilation tasks in parallel.
     """
 
-    def __init__(self, max_workers: int = 16):
+    def __init__(self, maximum_worker_threads: int = 16):
         """
-        Initialize the LaTeXCompilerExecutor.
+        Initialize the ParallelCompilationService.
 
-        Parameters:
-            max_workers (int): Maximum number of worker threads.
+        Args:
+            maximum_worker_threads: Maximum number of worker threads to use.
         """
-        self.max_workers = max_workers
+        self.maximum_worker_threads = maximum_worker_threads
+        self.compilation_tool_service = LatexCompilationToolService()
 
-    def compile_with_threads(
-        self, input_file: Path, clean_previous: bool = False
+    def execute_compilation_tasks_in_parallel(
+        self, input_file_path: Path, clean_previous_artifacts: bool = False
     ) -> None:
         """
-        Compile LaTeX document and handle compilation needs checking using multithreading.
+        Execute LaTeX compilation tasks in parallel using multithreading.
 
-        Parameters:
-            input_file (Path): Path to the input LaTeX file.
-            clean_previous (bool): Whether to clean previous compilation files before compiling.
+        Args:
+            input_file_path: Path to the input LaTeX file.
+            clean_previous_artifacts: Whether to clean previous compilation artifacts.
 
         Raises:
-            LaTeXCompilationError: If an error occurs during multithreaded compilation.
+            LatexCompilationError: If an error occurs during parallel compilation.
         """
-        compiler = LaTeXCompiler()
-
         try:
-            if clean_previous:
-                compiler.clean_previous_compilation(input_file)
-            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                compilation_task = executor.submit(compiler.compile_latex, input_file)
-                compilation_needs_task = executor.submit(
-                    compiler.check_compilation_needs, input_file
+            # Clean previous artifacts if requested
+            if clean_previous_artifacts:
+                self.compilation_tool_service.clean_compilation_artifacts(
+                    input_file_path
                 )
-                compilation_task.result()
-                compilation_needs_task.result()
-        except Exception as e:
-            logging.exception("An error occurred during multithreaded compilation:")
-            raise LaTeXCompilationError("Multithreaded compilation failed.") from e
+
+            # Execute compilation and auxiliary tool tasks in parallel
+            with ThreadPoolExecutor(
+                max_workers=self.maximum_worker_threads
+            ) as thread_executor:
+                main_compilation_task = thread_executor.submit(
+                    self.compilation_tool_service.compile_latex_document,
+                    input_file_path,
+                )
+                auxiliary_tools_task = thread_executor.submit(
+                    self.compilation_tool_service.execute_auxiliary_tools_if_needed,
+                    input_file_path,
+                )
+
+                # Wait for both tasks to complete
+                main_compilation_task.result()
+                auxiliary_tools_task.result()
+
+        except Exception as parallel_error:
+            logging.exception("Error during parallel compilation:")
+            raise LatexCompilationError(
+                "Parallel compilation failed."
+            ) from parallel_error
 
 
-class LaTeXCompilerUtility:
+class LatexDocumentCompilationService:
     """
-    Main utility class to handle LaTeX compilation.
+    Service for compiling LaTeX documents with comprehensive error handling.
     """
 
-    def __init__(self, input_file: Path, clean_previous: bool, max_workers: int):
+    def __init__(
+        self,
+        input_file_path: Optional[Path] = None,
+        clean_previous_artifacts: bool = False,
+        maximum_worker_threads: int = 16,
+    ):
         """
-        Initialize the LaTeXCompilerUtility.
+        Initialize the LatexDocumentCompilationService.
 
-        Parameters:
-            input_file (Path): Path to the LaTeX file.
-            clean_previous (bool): Whether to clean previous compilation files before compiling.
-            max_workers (int): Maximum number of worker threads.
+        Args:
+            input_file_path: Path to the LaTeX file to compile.
+            clean_previous_artifacts: Whether to clean previous compilation artifacts.
+            maximum_worker_threads: Maximum number of worker threads to use.
         """
-        self.input_file = input_file
-        self.clean_previous = clean_previous
-        self.max_workers = max_workers
-        self.executor = LaTeXCompilerExecutor(max_workers=self.max_workers)
-        self.logger = Logger()
-        self.dependency_checker = DependencyChecker()
+        self.input_file_path = input_file_path
+        self.clean_previous_artifacts = clean_previous_artifacts
+        self.maximum_worker_threads = maximum_worker_threads
 
-    def run(self) -> None:
+        # Initialize component services
+        self.parallel_compilation_service = ParallelCompilationService(
+            maximum_worker_threads
+        )
+        self.dependency_verification_service = LatexDependencyVerificationService()
+        self.logging_service = LoggingConfigurationService()
+
+    def compile_document(self, input_file_path: Optional[Path] = None) -> bool:
         """
-        Run the LaTeX compilation process.
+        Compile a LaTeX document with comprehensive error handling.
+
+        Args:
+            input_file_path: Path to the LaTeX file to compile.
+                           If None, uses the path provided during initialization.
+
+        Returns:
+            True if compilation was successful, False otherwise.
         """
+        # Use provided input file path or the one from initialization
+        effective_input_file_path = input_file_path or self.input_file_path
+
+        if not effective_input_file_path:
+            logging.error("No input file path provided.")
+            return False
+
         try:
-            self._validate_input_file()
-            self._setup_logging()
-            self._check_dependencies()
+            # Validate input file exists
+            self._validate_input_file_exists(effective_input_file_path)
 
-            logging.info("Starting compilation...")
-            print("Starting compilation...")
+            # Set up logging
+            self._configure_logging_system()
 
+            # Check dependencies
+            self._verify_required_tools_installed()
+
+            # Log start of compilation
+            logging.info("Starting LaTeX document compilation...")
+            print("Starting LaTeX document compilation...")
+
+            # Track compilation time
             start_time = time.time()
 
-            self.executor.compile_with_threads(self.input_file, self.clean_previous)
+            # Execute compilation tasks in parallel
+            self.parallel_compilation_service.execute_compilation_tasks_in_parallel(
+                effective_input_file_path, self.clean_previous_artifacts
+            )
 
+            # Calculate and log completion time
             end_time = time.time()
+            compilation_duration = end_time - start_time
+
             logging.info(
                 "Compilation completed successfully in %.2f seconds.",
-                end_time - start_time,
+                compilation_duration,
             )
             print(
-                f"Compilation completed successfully in {end_time - start_time:.2f} seconds."
+                f"Compilation completed successfully in {compilation_duration:.2f} seconds."
             )
-        except Exception as e:
+
+            return True
+
+        except Exception as compilation_error:
             logging.exception("An error occurred during compilation:")
-            print(f"An error occurred during compilation: {str(e)}")
-            sys.exit(1)
+            print(f"An error occurred during compilation: {str(compilation_error)}")
+            return False
 
-    def _validate_input_file(self) -> None:
+    def _validate_input_file_exists(self, input_file_path: Path) -> None:
         """Validate that the input LaTeX file exists."""
-        if not self.input_file.exists():
-            raise FileNotFoundError(f"File '{self.input_file}' not found.")
+        if not input_file_path.exists():
+            raise FileNotFoundError(f"LaTeX file '{input_file_path}' not found.")
 
-    def _setup_logging(self) -> None:
-        """Set up logging for the compilation process."""
+    def _configure_logging_system(self) -> None:
+        """Configure the logging system for the compilation process."""
         current_date = time.strftime("%Y-%m-%d", time.localtime())
-        log_file = Path(f"latex_last_compiled_{current_date}.log")
-        self.logger.setup_logging(log_file)
+        log_file_path = Path(f"latex_compilation_{current_date}.log")
+        self.logging_service.configure_logging_system(log_file_path)
 
-    def _check_dependencies(self) -> None:
-        """Check for required LaTeX compilation dependencies."""
-        self.dependency_checker.check_dependencies()
+    def _verify_required_tools_installed(self) -> None:
+        """Verify that all required LaTeX tools are installed."""
+        self.dependency_verification_service.verify_required_tools_installed()
 
 
-def parse_arguments() -> argparse.Namespace:
+class CommandLineArgumentParser:
     """
-    Parse command-line arguments.
-
-    Returns:
-        argparse.Namespace: Parsed command-line arguments.
+    Parser for command-line arguments.
     """
-    parser = argparse.ArgumentParser(description="LaTeX Compiler Utility")
-    parser.add_argument("input_file", type=str, help="Path to the LaTeX file")
-    parser.add_argument(
-        "--clean", action="store_true", help="Clean previous compilation files"
-    )
-    parser.add_argument(
-        "--max-workers", type=int, default=16, help="Maximum number of worker threads"
-    )
-    return parser.parse_args()
+
+    @staticmethod
+    def parse_command_line_arguments() -> argparse.Namespace:
+        """
+        Parse command-line arguments for the LaTeX document compiler.
+
+        Returns:
+            Parsed command-line arguments.
+        """
+        parser = argparse.ArgumentParser(description="LaTeX Document Compiler")
+        parser.add_argument(
+            "input_file", type=str, help="Path to the LaTeX file to compile"
+        )
+        parser.add_argument(
+            "--clean", action="store_true", help="Clean previous compilation artifacts"
+        )
+        parser.add_argument(
+            "--max-workers",
+            type=int,
+            default=16,
+            help="Maximum number of worker threads",
+        )
+        return parser.parse_args()
+
+
+class LatexDocumentCompilationApplicationLauncher:
+    """
+    Launcher for the LaTeX document compilation application.
+    """
+
+    @staticmethod
+    def launch_application() -> int:
+        """
+        Launch the LaTeX document compilation application.
+
+        Returns:
+            Exit code: 0 for success, 1 for failure.
+        """
+        # Parse command-line arguments
+        args = CommandLineArgumentParser.parse_command_line_arguments()
+        input_file_path = Path(args.input_file)
+        clean_previous_artifacts = args.clean
+        maximum_worker_threads = args.max_workers
+
+        # Create and run the compilation service
+        compilation_service = LatexDocumentCompilationService(
+            input_file_path=input_file_path,
+            clean_previous_artifacts=clean_previous_artifacts,
+            maximum_worker_threads=maximum_worker_threads,
+        )
+
+        # Execute compilation and return appropriate exit code
+        compilation_successful = compilation_service.compile_document()
+        return 0 if compilation_successful else 1
 
 
 def main() -> None:
     """
-    Main function to execute the script.
+    Main entry point for the LaTeX document generator script.
     """
-    args = parse_arguments()
-    input_file = Path(args.input_file)
-    clean_previous = args.clean
-    max_workers = args.max_workers
-
-    utility = LaTeXCompilerUtility(
-        input_file=input_file,
-        clean_previous=clean_previous,
-        max_workers=max_workers,
-    )
-    utility.run()
+    exit_code = LatexDocumentCompilationApplicationLauncher.launch_application()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
