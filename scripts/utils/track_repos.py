@@ -13,7 +13,7 @@ Usage:
 import os
 import subprocess
 import sys
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 
 
 class TerminalColor:

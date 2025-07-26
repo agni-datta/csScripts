@@ -23,7 +23,6 @@ Example:
 """
 
 import logging
-import os
 from pathlib import Path
 from subprocess import CalledProcessError, run
 from typing import List, Optional

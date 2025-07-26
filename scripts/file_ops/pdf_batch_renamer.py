@@ -21,8 +21,7 @@ import logging
 import os
 import re
 from multiprocessing import Pool, cpu_count
-from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import List, Optional, Set
 
 from spellchecker import SpellChecker
 

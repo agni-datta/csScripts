@@ -24,7 +24,7 @@ Example:
 
 import os
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import List
 
 
 @dataclass

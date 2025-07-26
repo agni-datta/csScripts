@@ -18,14 +18,13 @@ Example:
 
 import argparse
 import logging
-import os
 import shutil
 import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional
 
 
 class LatexCompilationError(Exception):

@@ -19,7 +19,7 @@ import argparse
 import glob
 import os
 import subprocess
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 
 class TextColumnFormattingService:

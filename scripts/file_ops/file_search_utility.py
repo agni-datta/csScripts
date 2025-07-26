@@ -28,7 +28,7 @@ Example:
 
 import os
 import re
-from typing import Dict, List, NamedTuple
+from typing import List, NamedTuple
 
 
 class SearchResultCollection(NamedTuple):
