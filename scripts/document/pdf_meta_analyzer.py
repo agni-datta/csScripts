@@ -12,12 +12,12 @@ Modules:
     app: Application entry point.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-import PyPDF2
 import fitz
+import PyPDF2
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
