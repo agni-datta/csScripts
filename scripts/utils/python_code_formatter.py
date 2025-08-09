@@ -24,7 +24,7 @@ Example:
 
 import os
 import subprocess
-from typing import List
+from typing import List, Type
 
 
 class PythonFileDiscoveryService:
@@ -35,7 +35,7 @@ class PythonFileDiscoveryService:
     within a specified directory hierarchy.
     """
 
-    def __init__(self, root_directory_path: str):
+    def __init__(self, root_directory_path: str) -> None:
         """
         Initialize the PythonFileDiscoveryService with a root directory.
 
@@ -56,7 +56,7 @@ class PythonFileDiscoveryService:
         for current_directory_path, _, file_names in os.walk(self.root_directory_path):
             for current_file_name in file_names:
                 if current_file_name.endswith(".py"):
-                    absolute_file_path = os.path.join(
+                    absolute_file_path: str = os.path.join(
                         current_directory_path, current_file_name
                     )
                     discovered_python_file_paths.append(absolute_file_path)
@@ -73,6 +73,18 @@ class CodeFormattingToolExecutor:
     """
 
     @staticmethod
+    def print_success(message: str) -> None:
+        print(message)
+
+    @staticmethod
+    def print_warning(message: str) -> None:
+        print(message)
+
+    @staticmethod
+    def print_error(message: str) -> None:
+        print(message)
+
+    @staticmethod
     def apply_black_formatter(target_file_path: str) -> bool:
         """
         Apply the Black code formatter to a Python file.
@@ -83,15 +95,20 @@ class CodeFormattingToolExecutor:
         Returns:
             bool: True if formatting was successful, False otherwise.
         """
-        print(f"Formatting {target_file_path} with Black...")
         try:
-            subprocess.run(["black", target_file_path], check=True)
+            subprocess.run(
+                ["black", target_file_path],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            print(f"{target_file_path}  ✓ black")
             return True
         except subprocess.CalledProcessError:
-            print(f"Error: Black formatting failed for {target_file_path}")
+            CodeFormattingToolExecutor.print_error(f"{target_file_path}  ✗ black")
             return False
         except FileNotFoundError:
-            print(
+            CodeFormattingToolExecutor.print_error(
                 "Error: Black formatter not found. Please install it with 'pip install black'"
             )
             return False
@@ -107,15 +124,22 @@ class CodeFormattingToolExecutor:
         Returns:
             bool: True if import sorting was successful, False otherwise.
         """
-        print(f"Sorting imports in {target_file_path} with isort...")
         try:
-            subprocess.run(["isort", target_file_path], check=True)
+            subprocess.run(
+                ["isort", target_file_path],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            print(f"{target_file_path}  ✓ isort")
             return True
         except subprocess.CalledProcessError:
-            print(f"Error: isort failed for {target_file_path}")
+            CodeFormattingToolExecutor.print_error(f"{target_file_path}  ✗ isort")
             return False
         except FileNotFoundError:
-            print("Error: isort not found. Please install it with 'pip install isort'")
+            CodeFormattingToolExecutor.print_error(
+                "Error: isort not found. Please install it with 'pip install isort'"
+            )
             return False
 
 
@@ -132,7 +156,7 @@ class PythonCodeFormattingService:
         formatting_tool_executor: Executor for code formatting tools.
     """
 
-    def __init__(self, root_directory_path: str):
+    def __init__(self, root_directory_path: str) -> None:
         """
         Initialize the PythonCodeFormattingService with a root directory.
 
@@ -140,8 +164,12 @@ class PythonCodeFormattingService:
             root_directory_path: The root directory where the search for Python files begins.
         """
         self.root_directory_path: str = root_directory_path
-        self.file_discovery_service = PythonFileDiscoveryService(root_directory_path)
-        self.formatting_tool_executor = CodeFormattingToolExecutor()
+        self.file_discovery_service: PythonFileDiscoveryService = (
+            PythonFileDiscoveryService(root_directory_path)
+        )
+        self.formatting_tool_executor: Type[CodeFormattingToolExecutor] = (
+            CodeFormattingToolExecutor
+        )
 
     def format_multiple_files(self, target_file_paths: List[str]) -> None:
         """
@@ -150,14 +178,14 @@ class PythonCodeFormattingService:
         Args:
             target_file_paths: List of paths to Python files to format.
         """
-        successful_format_count = 0
-        failed_format_count = 0
+        successful_format_count: int = 0
+        failed_format_count: int = 0
 
         for current_file_path in target_file_paths:
-            black_success = self.formatting_tool_executor.apply_black_formatter(
+            black_success: bool = self.formatting_tool_executor.apply_black_formatter(
                 current_file_path
             )
-            isort_success = self.formatting_tool_executor.apply_isort_formatter(
+            isort_success: bool = self.formatting_tool_executor.apply_isort_formatter(
                 current_file_path
             )
 
@@ -166,10 +194,12 @@ class PythonCodeFormattingService:
             else:
                 failed_format_count += 1
 
-        print(
-            f"\nFormatting complete: {successful_format_count} files formatted successfully, "
-            f"{failed_format_count} files had formatting errors."
-        )
+        if successful_format_count > 0:
+            print(
+                f"\nFormatting complete: {successful_format_count} files formatted successfully."
+            )
+        if failed_format_count > 0:
+            print(f"{failed_format_count} files had formatting errors.")
 
     def execute_formatting_process(self) -> None:
         """
@@ -179,7 +209,7 @@ class PythonCodeFormattingService:
         and applies formatting tools to them.
         """
         print(f"Searching for Python files in {self.root_directory_path}...")
-        discovered_python_files = (
+        discovered_python_files: List[str] = (
             self.file_discovery_service.discover_python_files_recursively()
         )
 
@@ -187,7 +217,7 @@ class PythonCodeFormattingService:
             print(f"Found {len(discovered_python_files)} Python files.")
             self.format_multiple_files(discovered_python_files)
         else:
-            print("No Python files found.")
+            CodeFormattingToolExecutor.print_warning("No Python files found.")
 
 
 class FormattingApplicationLauncher:
@@ -204,7 +234,9 @@ class FormattingApplicationLauncher:
             target_directory_path: Directory containing Python files to format.
                                    Defaults to the current directory.
         """
-        formatting_service = PythonCodeFormattingService(target_directory_path)
+        formatting_service: PythonCodeFormattingService = PythonCodeFormattingService(
+            target_directory_path
+        )
         formatting_service.execute_formatting_process()
 
 
@@ -214,8 +246,12 @@ def main() -> None:
 
     This function creates a FormattingApplicationLauncher and launches the application.
     """
-    target_directory_path = "."  # Change this to your target directory path if needed
-    application_launcher = FormattingApplicationLauncher()
+    target_directory_path: str = (
+        "."  # Change this to your target directory path if needed
+    )
+    application_launcher: FormattingApplicationLauncher = (
+        FormattingApplicationLauncher()
+    )
     application_launcher.launch_formatting_application(target_directory_path)
 
 
