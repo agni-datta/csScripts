@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Case-Sensitive File Renamer Module
 

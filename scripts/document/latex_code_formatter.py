@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 LaTeX Code Formatter Module
 

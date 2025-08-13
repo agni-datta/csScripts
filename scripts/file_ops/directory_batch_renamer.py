@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Directory Batch Renamer Module
 

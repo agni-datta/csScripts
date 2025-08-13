@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Git Repository Reset Module
 
