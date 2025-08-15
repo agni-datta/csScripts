@@ -1,18 +1,18 @@
 ---
-title: Computer Science Scripts (csScripts)
-linter-yaml-title-alias: Computer Science Scripts (csScripts)
+title: README
+linter-yaml-title-alias: README
 date created: Friday, February 21st 2025, 18:44:48
-date modified: Friday, July 25th 2025, 21:56:08
-aliases: Computer Science Scripts (csScripts)
+date modified: Friday, August 15th 2025, 19:23:52
+aliases: README
 ---
 
-# Computer Science Scripts (csScripts)
+## Computer Science Scripts (csScripts)
 
-## Description
+### Description
 
 A comprehensive collection of utility scripts for academic and research workflows, with a focus on LaTeX document management, file operations, and productivity automation. This repository implements service-oriented architecture with descriptive naming conventions following Google’s style guide.
 
-## Features
+### Features
 
 - **Document Management Services**
   - LaTeX document generation and compilation
@@ -31,7 +31,7 @@ A comprehensive collection of utility scripts for academic and research workflow
   - Git repository management
   - Python code optimization
 
-## Directory Structure
+### Directory Structure
 
 ```
 csScripts/
@@ -75,14 +75,14 @@ csScripts/
     └── README.md
 ```
 
-## Requirements
+### Requirements
 
 - Python 3.8 or higher
 - Dependencies enumerated in `requirements.txt`
 
-## Installation
+### Installation
 
-### From Source Repository
+#### From Source Repository
 
 ```bash
 git clone https://github.com/your-username/csScripts.git
@@ -90,15 +90,15 @@ cd csScripts
 pip install -e .
 ```
 
-### Using Package Manager
+#### Using Package Manager
 
 ```bash
 pip install csScripts
 ```
 
-## Usage
+### Usage
 
-### Interactive Script Launcher
+#### Interactive Script Launcher
 
 Execute the interactive script launcher to access all available services:
 
@@ -106,7 +106,7 @@ Execute the interactive script launcher to access all available services:
 python script_launcher.py
 ```
 
-### Command Line Interfaces
+#### Command Line Interfaces
 
 After installation, the following command-line interfaces are available:
 
@@ -116,7 +116,7 @@ After installation, the following command-line interfaces are available:
 - `cs_file_renamer` - Perform batch file renaming operations
 - `cs_pdf_renamer` - Process PDF files with metadata optimization
 
-### Python API Integration
+#### Python API Integration
 
 ```python
 from scripts.document.latex_auxiliary_cleaner import LatexAuxiliaryFileCleaningService
@@ -126,9 +126,9 @@ cleaning_service = LatexAuxiliaryFileCleaningService()
 cleaning_service.execute_cleaning_process("/path/to/latex/project")
 ```
 
-## Development Methodology
+### Development Methodology
 
-### Establishing Development Environment
+#### Establishing Development Environment
 
 ```bash
 # Install development dependencies
@@ -144,14 +144,14 @@ flake8 scripts tests
 mypy scripts tests
 ```
 
-## Contribution Guidelines
+### Contribution Guidelines
 
 Scholarly contributions are welcomed and encouraged. Please consult our [Contributing Guidelines](CONTRIBUTING.md) for comprehensive details on the contribution process.
 
-## License
+### License
 
 This project is distributed under the MIT License - see the [LICENSE](LICENSE) file for complete legal text.
 
-## Contact Information
+### Contact Information
 
 Maintained by Agni Datta. For inquiries or technical support, please open an issue in the repository or contact via electronic mail.
