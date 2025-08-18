@@ -13,13 +13,13 @@ Example:
 
 import argparse
 import csv
-from enum import Enum
 import logging
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
+from enum import Enum
+from pathlib import Path
 from typing import Dict, List, Optional, Type, TypeVar
 
 # Catppuccin color palette for terminal output
