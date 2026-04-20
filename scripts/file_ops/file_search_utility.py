@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
-"""
-File Search Utility Module
+"""Interactive case-insensitive file and directory search utility.
 
-This module provides a command-line utility for searching files and directories based on
-user-specified criteria. It implements a flexible search system that can find both files
-and folders matching a given pattern.
+Recursively walks a root directory and reports every file and folder whose
+name contains the search string (case-insensitive, supports regular
+expressions).  Results are split into two groups: matching folders and
+matching files.
 
-Features:
-- Case-insensitive search
-- Recursive directory traversal
-- Separate results for files and folders
-- Interactive command-line interface
-- Regular expression support
+Usage::
 
-The module is organized into several main classes:
-- FileSearchCriteria: Encapsulates search parameters
-- FileSystemSearchService: Performs the actual search operation
-- SearchResultDisplayService: Handles displaying search results
-- UserInputCollectionService: Collects user input for search parameters
-- FileSearchApplicationLauncher: Coordinates the search process
+    # Interactive (prompts for root directory and search string)
+    python -m scripts.file_ops.file_search_utility
 
-Example:
-    >>> launcher = FileSearchApplicationLauncher()
-    >>> launcher.execute_search_process()
-    Enter the root directory to search: /path/to/search
-    Enter the string to search for: example
+    # Library usage
+    >>> from scripts.file_ops.file_search_utility import FileSearchApplicationLauncher
+    >>> FileSearchApplicationLauncher().execute_search_process()
+
+Example::
+
+    $ python -m scripts.file_ops.file_search_utility
+    Enter the root directory to search: /home/user
+    Enter the string to search for: report
+    Matching folders (2):
+      /home/user/reports
+      /home/user/old/reports
+    Matching files (5):
+      /home/user/reports/annual_report.pdf
+      ...
 """
 
 import os
@@ -90,14 +91,12 @@ class FileSystemSearchService:
         for current_directory_path, subdirectory_names, file_names in os.walk(
             search_criteria.target_directory_path
         ):
-            # Find matching directories
             for subdirectory_name in subdirectory_names:
                 if search_criteria.compiled_search_pattern.search(subdirectory_name):
                     matching_folder_paths.append(
                         os.path.join(current_directory_path, subdirectory_name)
                     )
 
-            # Find matching files
             for file_name in file_names:
                 if search_criteria.compiled_search_pattern.search(file_name):
                     matching_file_paths.append(
@@ -128,7 +127,6 @@ class SearchResultDisplayService:
         """
         print("\n--- Search Results ---")
 
-        # Display folder results
         print("\nFolders:")
         if search_results.matching_folders:
             for folder_path in search_results.matching_folders:
@@ -136,7 +134,6 @@ class SearchResultDisplayService:
         else:
             print("No matching folders found.")
 
-        # Display file results
         print("\nFiles:")
         if search_results.matching_files:
             for file_path in search_results.matching_files:
@@ -144,7 +141,6 @@ class SearchResultDisplayService:
         else:
             print("No matching files found.")
 
-        # Display summary
         print(
             f"\nFound {len(search_results.matching_folders)} folders and "
             f"{len(search_results.matching_files)} files matching the search criteria."
@@ -218,17 +214,14 @@ class FileSearchApplicationLauncher:
         """
         Execute the complete search process.
         """
-        # Collect search parameters from the user
         search_criteria: FileSearchCriteria = (
             self.input_collection_service.collect_search_parameters()
         )
 
-        # Perform the search operation
         search_results: SearchResultCollection = (
             self.search_service.execute_search_operation(search_criteria)
         )
 
-        # Display the search results
         self.display_service.display_formatted_search_results(search_results)
 
 

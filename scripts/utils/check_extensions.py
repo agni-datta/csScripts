@@ -1,24 +1,34 @@
 #!/usr/bin/env python3
-"""Interactive File Extension Checker.
+"""Check that all files in a directory have well-formed, consistent extensions.
 
-A tool to check if all files in a directory have proper extensions
-and not malformed extensions like .ext.ext or other variations.
-Supports any file extension and provides both interactive and batch modes.
+Detects common extension problems such as double extensions (``file.mp3.mp3``),
+wrong-case extensions (``File.MP3`` when ``.mp3`` is expected), and files
+that are missing an extension entirely.  Supports interactive and batch modes.
 
-Example usage:
-    Interactive mode:
-        python3 check_extensions.py
+Usage::
 
-    Batch mode:
-        python3 check_extensions.py mp3 /path/to/music
-        python3 check_extensions.py --version
-        python3 check_extensions.py --help
+    # Interactive (prompts for extension and directory)
+    python -m scripts.utils.check_extensions
+
+    # Batch: check all .mp3 files under /path/to/music
+    python -m scripts.utils.check_extensions mp3 /path/to/music
+
+    # Show version
+    python -m scripts.utils.check_extensions --version
+
+Example::
+
+    $ python -m scripts.utils.check_extensions mp3 ~/Music
+    Checking for malformed .mp3 extensions in ~/Music …
+    ✗ Bad extension: track01.MP3 (expected .mp3)
+    ✗ Double extension: song.mp3.mp3
+    Found 2 issue(s) in 150 file(s).
 """
 
 import argparse
 import os
-import sys
 from pathlib import Path
+import sys
 from typing import List, Tuple
 
 __version__ = "2.0.0"
@@ -101,7 +111,6 @@ class FileExtensionChecker:
             filename: The name of the file to classify.
             result: The result object to update.
         """
-        # Skip the script itself
         if filename in self.SCRIPT_NAMES:
             return
 
@@ -152,7 +161,6 @@ class ExtensionCheckerUI:
                 print("\n\nGoodbye!")
                 break
             except SystemExit:
-                # User entered ':q', already handled in the method that raised it
                 break
             except EOFError:
                 print("\nGoodbye!")
@@ -258,16 +266,13 @@ class ExtensionCheckerUI:
             print("No files found in directory.")
             return
 
-        # Display proper files
         print(f"[OK] Proper .{ext} files: {len(result.proper_files)}")
         self._display_file_list(result.proper_files)
 
-        # Display other files
         if result.other_files:
             print(f"\n[INFO] Non-.{ext} files: {len(result.other_files)}")
             self._display_file_list(result.other_files)
 
-        # Display issues
         if result.issues:
             print(f"\n[ERROR] Issues found: {len(result.issues)}")
             for issue in result.issues:
@@ -275,7 +280,6 @@ class ExtensionCheckerUI:
         else:
             print(f"\n[OK] All .{ext} files have proper extensions!")
 
-        # Display summary
         print("\n" + "=" * 60)
         if result.success:
             print("RESULT: [OK] No extension issues found!")
@@ -397,11 +401,9 @@ def main() -> None:
     ui = ExtensionCheckerUI()
 
     if args.extension:
-        # Batch mode
         success = ui.run_batch_mode(args.extension, args.directory)
         sys.exit(0 if success else 1)
     else:
-        # Interactive mode
         ui.run_interactive_mode()
 
 

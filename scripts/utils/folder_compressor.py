@@ -1,30 +1,43 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Compress a folder into a .7z archive using 7-Zip with maximum compression.
+"""Compress a folder into a ``.7z`` archive with maximum 7-Zip compression.
 
-- Uses all available CPU threads
-- Solid compression with specified block and dictionary sizes
-- Displays a file-count progress bar
-- Reports original size, compressed size, and compression ratio
-- Uses ANSI colors for terminal output (no external color libraries)
-- Checks for 7z installation and suggests OS-specific install commands
+Uses all available CPU threads, solid-block mode, and user-configurable
+dictionary and block sizes for best-in-class compression ratios.  A
+file-count progress bar is displayed during compression.  After completion
+the original size, compressed size, and compression ratio are reported.
 
-Author: Agni Datta
+Requires ``7z`` (p7zip) on ``$PATH``.  If absent the script prints
+OS-appropriate installation instructions and exits.
+
+Usage::
+
+    # Compress a folder (output: folder.7z in the same parent directory)
+    python -m scripts.utils.folder_compressor /path/to/folder
+
+    # Specify output archive path explicitly
+    python -m scripts.utils.folder_compressor /path/to/folder -o /path/to/archive.7z
+
+Example::
+
+    $ python -m scripts.utils.folder_compressor ~/projects/my-project
+    Compressing my-project …
+    Progress: 100%|████████████████| 2341/2341 files
+    Original:   845.2 MB
+    Compressed: 312.4 MB
+    Ratio:      63.0 %
 """
 
 import argparse
 import os
+from pathlib import Path
 import platform
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 from tqdm import tqdm
 
 
-# ======== Colors ========
 class AnsiColors:
     RESET = "\033[0m"
     RED = "\033[31m"
@@ -38,7 +51,6 @@ class AnsiColors:
         return f"{color_code}{text}{AnsiColors.RESET}"
 
 
-# ======== SevenZip Checker ========
 class SevenZipChecker:
     @staticmethod
     def is_seven_zip_installed() -> bool:
@@ -75,7 +87,6 @@ class SevenZipChecker:
         return ""
 
 
-# ======== Utilities ========
 def human_readable_size(num_bytes: int, suffix: str = "B") -> str:
     """Convert bytes to human-readable format (KB, MB, GB, etc)."""
     for unit in ["", "K", "M", "G", "T", "P"]:
@@ -114,7 +125,6 @@ def file_size(file_path: Path) -> int:
         return 0
 
 
-# ======== Compressor Config ========
 class CompressorConfig:
     def __init__(self, block_size_kb: int = 1024, dict_size_mb: int = 1536):
         self.block_size_kb = block_size_kb
@@ -132,7 +142,6 @@ class CompressorConfig:
         ]
 
 
-# ======== Folder Compressor ========
 class FolderCompressor:
     def __init__(
         self, source_folder: str, output_filename: str, config: CompressorConfig
@@ -210,7 +219,6 @@ class FolderCompressor:
         )
 
 
-# ======== CLI Handler ========
 class CLI:
     def __init__(self):
         self.parser = argparse.ArgumentParser(

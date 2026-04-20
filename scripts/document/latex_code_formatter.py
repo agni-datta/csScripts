@@ -1,19 +1,34 @@
 #!/usr/bin/env python3
-"""
-LaTeX Code Formatter Module
+"""Format LaTeX source files using ``latexindent`` and optional column re-wrapping.
 
-This module provides functionality to format LaTeX source code for improved readability
-and consistency. It includes features for:
-- Indentation and whitespace normalization
-- Section and environment alignment
-- Comment formatting
-- Batch processing of multiple files
+Each file is processed in two passes:
 
-The formatter can be used as a command-line tool or as a library in other Python projects.
+1. **Column wrapping** – long prose lines are broken at a configurable width
+   (default 80 characters) while blank lines are preserved.
+2. **Indentation** – ``latexindent`` is run to normalise indentation of LaTeX
+   environments, commands, and groups.
 
-Example:
-    >>> formatter = LatexFormattingService()
-    >>> formatter.format_single_file("input.tex")
+A ``.bak`` backup of every original file is kept alongside the formatted
+version so that changes can be reviewed or reverted.
+
+Usage::
+
+    # Format a single file (creates paper.tex.bak)
+    python -m scripts.document.latex_code_formatter --file paper.tex
+
+    # Format all .tex files under the current directory
+    python -m scripts.document.latex_code_formatter --all
+
+    # Format all .tex files with a custom column width
+    python -m scripts.document.latex_code_formatter --all --column-width 100
+
+Dependencies:
+    latexindent (part of TeX Live / MiKTeX) must be on ``$PATH``.
+
+Example::
+
+    $ python -m scripts.document.latex_code_formatter --file paper.tex
+    File processed successfully. A backup has been saved as paper.tex.bak
 """
 
 import argparse
@@ -52,17 +67,14 @@ class TextColumnFormattingService:
             current_output_line = ""
 
             for word in words_in_line:
-                # Check if adding the word would exceed the column width
                 if len(current_output_line) + len(word) + 1 <= maximum_column_width:
                     if current_output_line:  # Add space if not the first word
                         current_output_line += " "
                     current_output_line += word
                 else:
-                    # Line would be too long, start a new line
                     formatted_lines.append(current_output_line)
                     current_output_line = word
 
-            # Add the last line if there's content
             if current_output_line:
                 formatted_lines.append(current_output_line)
 
@@ -153,23 +165,18 @@ class LatexFileProcessingService:
         Raises:
             FileNotFoundError: If the specified LaTeX file does not exist.
         """
-        # Create backup
         backup_file_path = self.backup_service.create_backup_file(file_path)
 
-        # Read content from backup
         with open(backup_file_path, "r") as file:
             file_content = file.read()
 
-        # Format text into columns
         formatted_text = self.text_formatting_service.format_text_into_columns(
             file_content, column_width
         )
 
-        # Write formatted text back to original file
         with open(file_path, "w") as file:
             file.write(formatted_text)
 
-        # Apply latexindent formatting
         self.indent_tool_service.apply_latexindent_formatting(file_path, file_path)
 
 
@@ -344,10 +351,8 @@ class LatexFormattingApplicationLauncher:
         """
         Launch the LaTeX formatting application.
         """
-        # Parse command-line arguments
         args = CommandLineArgumentParser.parse_command_line_arguments()
 
-        # Create formatting service and execute operation
         formatting_service = LatexFormattingService()
         formatting_service.execute_formatting_operation(
             file_path=args.file, process_all=args.all, column_width=args.column_width

@@ -1,27 +1,43 @@
 #!/usr/bin/env python3
+"""Install Windows packages in bulk using Chocolatey.
+
+Reads a predefined list of package identifiers and installs each one with
+``choco install -y``, displaying coloured per-package status lines and a
+final summary table.
+
+**Windows only** – Chocolatey must be installed.  See
+https://chocolatey.org/install for setup instructions.
+
+Usage::
+
+    python -m scripts.utils.chocolatey_installer
+
+    # Library usage
+    >>> from scripts.utils.chocolatey_installer import ChocolateyInstaller
+    >>> ChocolateyInstaller().install_all_packages()
+
+Example::
+
+    PS C:\\> python -m scripts.utils.chocolatey_installer
+    Installing git ...       ✓ success (1.2 s)
+    Installing vscode ...    ✓ success (4.7 s)
+    Installing 7zip ...      ✓ success (0.9 s)
+    ...
+    Summary: 12 installed, 0 failed
 """
-Chocolatey Package Installer Module
 
-This module provides utilities for installing and managing packages using Chocolatey,
-a package manager for Windows. It includes colorized terminal output, status reporting,
-and structured result handling for package installation operations.
-
-Author: Agni Datta
-Date: 2024-07-12
-Version: 2.0.0
-"""
-
-import os
-import sys
-import time
 from dataclasses import dataclass
 from enum import Enum
+import os
 from pathlib import Path
-from subprocess import CalledProcessError, CompletedProcess, run
+from subprocess import CalledProcessError
+from subprocess import CompletedProcess
+from subprocess import run
+import sys
+import time
 from typing import Any, Dict, List, Optional
 
 
-# ANSI color codes for Google-style colored terminal output
 class TerminalColor:
     HEADER: str = "\033[95m"
     OKBLUE: str = "\033[94m"

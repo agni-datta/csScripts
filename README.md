@@ -1,157 +1,131 @@
 ---
 title: README
-linter-yaml-title-alias: README
-date created: Friday, February 21st 2025, 18:44:48
-date modified: Friday, August 15th 2025, 19:23:52
 aliases: README
+linter-yaml-title-alias: README
+date created: Monday, April 20th 2026, 10:44:03 pm
+date modified: Monday, April 20th 2026, 11:10:42 pm
 ---
 
-## Computer Science Scripts (csScripts)
+## csScripts
 
-### Description
-
-A comprehensive collection of utility scripts for academic and research workflows, with a focus on LaTeX document management, file operations, and productivity automation. This repository implements service-oriented architecture with descriptive naming conventions following Google’s style guide.
-
-### Features
-
-- **Document Management Services**
-  - LaTeX document generation and compilation
-  - LaTeX auxiliary file cleaning
-  - Book structure generation
-  - PDF linearization and optimization
-  - PDF signing with GPG
-  - Directory indexing
-- **File Operation Services**
-  - File and directory batch renaming
-  - Case-sensitive file transformation
-  - PDF metadata handling and batch processing
-  - File search and discovery
-- **Utility Services**
-  - Code formatting and style enforcement
-  - Git repository management
-  - Python code optimization
+Utility scripts for academic and research workflows—LaTeX document management, file operations, and productivity automation. Written in Python 3.10+ following Google style with full type hints.
 
 ### Directory Structure
 
 ```
 csScripts/
-├── README.md
-├── LICENSE
+├── pyproject.toml          # build + tool config (black, isort, ruff, mypy, pytest)
+├── setup.py                # minimal shim (pyproject.toml is authoritative)
 ├── requirements.txt
-├── setup.py
-├── script_launcher.py
+├── script_launcher.py      # interactive menu launcher
 ├── scripts/
-│   ├── __init__.py
-│   ├── document/
-│   │   ├── __init__.py
+│   ├── document/           # LaTeX + PDF tools
 │   │   ├── book_structure_generator.py
+│   │   ├── check_british.py
+│   │   ├── check_grammar.py
+│   │   ├── check_spelling.py
+│   │   ├── directory_indexer.py
+│   │   ├── join_lines.py
 │   │   ├── latex_auxiliary_cleaner.py
 │   │   ├── latex_code_formatter.py
 │   │   ├── latex_document_generator.py
-│   │   ├── pdf_linearizer.py
-│   │   ├── postscript_to_pdf_converter.py
 │   │   ├── pdf_gpg_signer.py
-│   │   └── directory_indexer.py
-│   ├── file_ops/
-│   │   ├── __init__.py
+│   │   ├── pdf_linearizer.py
+│   │   ├── pdf_meta_analyzer.py
+│   │   ├── pdf_to_eps_converter.py
+│   │   ├── postscript_to_pdf_converter.py
+│   │   ├── remove_blank_lines.py
+│   │   └── remove_comments.py
+│   ├── file_ops/           # Batch renaming, search, sync
 │   │   ├── case_sensitive_file_renamer.py
 │   │   ├── directory_batch_renamer.py
 │   │   ├── file_batch_renamer.py
 │   │   ├── file_search_utility.py
+│   │   ├── fileops.py
+│   │   ├── mirror_shell.py
 │   │   └── pdf_batch_renamer.py
-│   └── utils/
-│       ├── __init__.py
+│   └── utils/              # System, git, image, packaging
+│       ├── check_extensions.py
+│       ├── chocolatey_installer.py
+│       ├── code_formatter.py
+│       ├── folder_compressor.py
 │       ├── git_repository_reset.py
-│       └── python_code_formatter.py
-├── tests/
-│   ├── __init__.py
-│   ├── test_document.py
-│   └── test_file_ops.py
-├── docs/
-│   └── README.md
-└── examples/
-    ├── example_batch_rename.py
-    ├── example_latex_cleaner.py
-    └── README.md
+│       ├── gnome_templates.py
+│       ├── image_to_nord_converter.py
+│       ├── nfo_renamer.py
+│       ├── package_housekeeping.py
+│       ├── setup_submodules.py
+│       └── track_repos.py
+└── tests/
+    ├── test_check_british.py
+    ├── test_check_grammar.py
+    ├── test_check_spelling.py
+    ├── test_join_lines.py
+    ├── test_remove_blank_lines.py
+    └── test_remove_comments.py
 ```
 
 ### Requirements
 
-- Python 3.8 or higher
-- Dependencies enumerated in `requirements.txt`
+- Python 3.10+
+- External tools (where applicable): `aspell`, `latexmk`, `qpdf`, `ghostscript`, `rclone`, `7z`, `gpg`, `black`, `isort`
 
 ### Installation
-
-#### From Source Repository
 
 ```bash
 git clone https://github.com/your-username/csScripts.git
 cd csScripts
 pip install -e .
-```
-
-#### Using Package Manager
-
-```bash
-pip install csScripts
-```
-
-### Usage
-
-#### Interactive Script Launcher
-
-Execute the interactive script launcher to access all available services:
-
-```bash
-python script_launcher.py
-```
-
-#### Command Line Interfaces
-
-After installation, the following command-line interfaces are available:
-
-- `cs_book_generator` - Generate structured book templates
-- `cs_latex_cleaner` - Clean LaTeX auxiliary files
-- `cs_code_formatter` - Format code according to Google’s style guide
-- `cs_file_renamer` - Perform batch file renaming operations
-- `cs_pdf_renamer` - Process PDF files with metadata optimization
-
-#### Python API Integration
-
-```python
-from scripts.document.latex_auxiliary_cleaner import LatexAuxiliaryFileCleaningService
-
-# Clean LaTeX auxiliary files in a directory
-cleaning_service = LatexAuxiliaryFileCleaningService()
-cleaning_service.execute_cleaning_process("/path/to/latex/project")
-```
-
-### Development Methodology
-
-#### Establishing Development Environment
-
-```bash
-# Install development dependencies
+# with dev tools:
 pip install -e ".[dev]"
-
-# Execute test suite
-pytest
-
-# Perform code quality analysis
-flake8 scripts tests
-
-# Conduct static type checking
-mypy scripts tests
 ```
 
-### Contribution Guidelines
+### CLI Entry Points
 
-Scholarly contributions are welcomed and encouraged. Please consult our [Contributing Guidelines](CONTRIBUTING.md) for comprehensive details on the contribution process.
+| Command | Script |
+| --- | --- |
+| `cs-book-generator` | `scripts/document/book_structure_generator.py` |
+| `cs-latex-cleaner` | `scripts/document/latex_auxiliary_cleaner.py` |
+| `cs-file-renamer` | `scripts/file_ops/file_batch_renamer.py` |
+| `cs-pdf-renamer` | `scripts/file_ops/pdf_batch_renamer.py` |
+| `cs-code-formatter` | `scripts/utils/code_formatter.py` |
+| `cs-check-british` | `scripts/document/check_british.py` |
+| `cs-check-grammar` | `scripts/document/check_grammar.py` |
+| `cs-check-spelling` | `scripts/document/check_spelling.py` |
+
+### Usage Examples
+
+```bash
+# Check a LaTeX project for British spellings
+cs-check-british path/to/project/
+
+# Remove LaTeX comments from a file
+python -m scripts.document.remove_comments paper.tex
+
+# Batch rename files with sequential numbers
+cs-file-renamer /path/to/dir
+
+# Format all Python files in a directory
+cs-code-formatter /path/to/project
+```
+
+### Development
+
+```bash
+# Run tests
+python3 -m pytest
+
+# Format code
+black scripts/ tests/
+isort scripts/ tests/
+
+# Lint
+ruff check scripts/ tests/
+
+# Type check
+mypy scripts/
+```
 
 ### License
 
-This project is distributed under the MIT License - see the [LICENSE](LICENSE) file for complete legal text.
-
-### Contact Information
-
-Maintained by Agni Datta. For inquiries or technical support, please open an issue in the repository or contact via electronic mail.
+MIT—see [LICENSE](LICENSE).

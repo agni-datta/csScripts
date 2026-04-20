@@ -140,7 +140,6 @@ distclean: clean
         """Populate the internal template list."""
         self._templates.extend(
             [
-                # Text and markup
                 TemplateFile(
                     "Text File.txt",
                     "Title\n\nSummary:\n\n",
@@ -174,7 +173,6 @@ distclean: clean
                     "<root>\n  <item>value</item>\n</root>\n",
                 ),
                 TemplateFile("CSV.csv", "column_a,column_b,column_c\n,,\n"),
-                # Code with shebangs where applicable
                 TemplateFile(
                     "Python.py",
                     "#!/usr/bin/env python3\n"
@@ -213,17 +211,14 @@ distclean: clean
                     "    }\n"
                     "}\n",
                 ),
-                # LaTeX
                 TemplateFile("LaTeX.tex", self._LATEX_MAIN),
                 TemplateFile("LaTeX Makefile", self._LATEX_MAKEFILE),
-                # Office placeholders as empty binaries
                 TemplateFile("Word Document.docx", is_binary=True),
                 TemplateFile("Excel Spreadsheet.xlsx", is_binary=True),
                 TemplateFile("PowerPoint.pptx", is_binary=True),
                 TemplateFile("LibreOffice Writer.odt", is_binary=True),
                 TemplateFile("LibreOffice Calc.ods", is_binary=True),
                 TemplateFile("LibreOffice Impress.odp", is_binary=True),
-                # Extras
                 TemplateFile(
                     "HTML5 Boilerplate.html",
                     '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Document</title><main><h1>Title</h1></main></html>',

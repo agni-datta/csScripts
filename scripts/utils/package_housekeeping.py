@@ -1,32 +1,46 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""package_housekeeping.py
+"""Backup and restore DNF and Flatpak package lists on Fedora Linux.
 
-Backup and restore utility for DNF packages (on Fedora) and Flatpak applications.
+Provides an interactive menu to:
 
-DNF (Fedora only):
-  - Backup: `dnf repoquery --qf "%{name}" --userinstalled` → $HOME/.config/fedora/fedora_installed.conf
-  - Restore: read that file and run `sudo dnf install -y <packages>`
+* **Backup DNF packages** – runs ``dnf repoquery --userinstalled`` and saves
+  the list to ``$HOME/.config/fedora/fedora_installed.conf``.
+* **Restore DNF packages** – reads the saved list and runs
+  ``sudo dnf install -y`` for each entry.
+* **Backup Flatpak apps** – runs ``flatpak list --app`` and saves application
+  IDs to ``$HOME/.config/flatpak/flatpaks_installed.conf``.
+* **Restore Flatpak apps** – reinstalls every saved application ID.
+* **View logs** – prints the last 50 lines of the newest run log with colour.
 
-Flatpak:
-  - Backup: `flatpak list --columns=application --app` → $HOME/.config/flatpak/flatpaks_installed.conf
-  - Restore: read that file and run `xargs -a flatpaks_installed.conf flatpak install -y`
+Each run appends a timestamped log to ``$HOME/.config/fedora/``.
 
-Logs:
-  - Each run writes $HOME/.config/fedora/backup-<HHSS>-<DDMMYYYY>.log
-  - Menu option prints the last 50 lines of the newest log with color
+Usage::
+
+    python -m scripts.utils.package_housekeeping
+
+Example::
+
+    $ python -m scripts.utils.package_housekeeping
+    [1] Backup DNF packages
+    [2] Restore DNF packages
+    [3] Backup Flatpak apps
+    [4] Restore Flatpak apps
+    [5] View log
+    [q] Quit
+    > 1
+    Backed up 312 packages to ~/.config/fedora/fedora_installed.conf
 """
 
 from __future__ import annotations
 
-import shlex
-import shutil
-import subprocess
-import sys
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
 from typing import Dict, List, Optional, Sequence, Tuple
 
 

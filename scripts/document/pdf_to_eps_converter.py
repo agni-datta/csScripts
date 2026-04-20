@@ -1,22 +1,49 @@
 #!/usr/bin/env python3
+"""Convert PDF files to EPS format using Ghostscript.
+
+Finds all ``.pdf`` files in a user-specified directory and converts each one
+to an ``.eps`` file using the ``eps2write`` Ghostscript device.  Existing
+``.eps`` files are skipped unless dry-run mode is active.  Progress is shown
+on a per-file progress bar with coloured status lines.
+
+Usage::
+
+    # Interactive (prompts for directory)
+    python -m scripts.document.pdf_to_eps_converter
+
+    # Library usage
+    >>> from scripts.document.pdf_to_eps_converter import PDFToEPSBatchConverter
+    >>> converter = PDFToEPSBatchConverter()
+    >>> summary = converter.convert_all_pdfs_in_directory("/path/to/pdfs")
+
+Dependencies:
+    Ghostscript (``gs`` on Linux/macOS, ``gswin32c.exe`` on Windows) must be
+    available on ``$PATH``.  Install with ``brew install ghostscript`` or
+    ``sudo apt install ghostscript``.
+
+Example::
+
+    $ python -m scripts.document.pdf_to_eps_converter
+    Enter the directory path containing PDF files: /path/to/docs
+    Scanning directory: /path/to/docs
+    Found 3 PDF file(s) to convert
+    Progress |████████████████████████████████████████| 3/3 100.0%
+    ✓ Successfully converted: paper.pdf
+    ...
+    Conversion Summary:
+      Files processed: 3
+      Successful: 3
+      Failed: 0
+      Skipped: 0
 """
-PDF to EPS Converter Module.
 
-This module provides a modular, object-oriented interface for converting PDF files to EPS format
-using Ghostscript. It features colorized terminal output and a progress bar.
-
-Author: Agni Datta
-Date: 2024-07-12
-Version: 2.2.0
-"""
-
+from dataclasses import dataclass
+from enum import Enum
 import os
+from pathlib import Path
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
-from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
@@ -49,11 +76,11 @@ def color_text(text: str, color_code: str) -> str:
 
 
 class FileConversionStatus(Enum):
-    """Status of a file conversion."""
+    """Status of a single file conversion operation."""
 
-    SUCCESS: str = "success"
-    FAILED: str = "failed"
-    SKIPPED: str = "skipped"
+    SUCCESS = "success"
+    FAILED = "failed"
+    SKIPPED = "skipped"
 
 
 @dataclass

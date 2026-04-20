@@ -1,17 +1,38 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Align ``.nfo`` filenames with their companion video file in each subdirectory.
 
-"""
-NFO Renamer
-Pure OOP tool to align `.nfo` filenames with the single video file in each subdirectory.
-Supports dry runs, colorized output (Catppuccin Mocha), and forced overwrite on conflicts.
+Each subdirectory should contain exactly one video file and one ``.nfo``
+metadata file.  This tool renames the ``.nfo`` to match the video's stem so
+that media players (Kodi, Plex, Jellyfin, etc.) can automatically associate
+the metadata with the correct title.
+
+Colourised output uses the Catppuccin Mocha palette.  A ``--dry-run`` flag
+lets you preview all renames without touching the filesystem, and ``--force``
+overwrites any existing ``.nfo`` files that would conflict.
+
+Usage::
+
+    # Preview renames (no files changed)
+    python -m scripts.utils.nfo_renamer --dry-run /path/to/media
+
+    # Apply renames
+    python -m scripts.utils.nfo_renamer /path/to/media
+
+    # Overwrite conflicting .nfo files
+    python -m scripts.utils.nfo_renamer --force /path/to/media
+
+Example::
+
+    $ python -m scripts.utils.nfo_renamer ~/Videos/Movies
+    ✓ Renamed: movie.nfo -> The.Matrix.1999.nfo
+    ...
 """
 
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
+import sys
 from typing import Iterable, List, Optional, Sequence, Tuple
 
 

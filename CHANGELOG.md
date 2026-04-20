@@ -1,16 +1,36 @@
 ---
 title: CHANGELOG
 linter-yaml-title-alias: CHANGELOG
-date created: Friday, July 11th 2025, 18:56:29
-date modified: Friday, August 15th 2025, 19:23:52
+date created: Monday, April 20th 2026, 10:44:39 pm
+date modified: Monday, April 20th 2026, 11:10:41 pm
 aliases: CHANGELOG
 ---
 
 ## CHANGELOG
 
-### TL;DR - Important Changes Only
+### Version 1.1.0—2026-04-21
 
-#### **Version 1.0.0 - 2025-07-17**
+#### Breaking Changes
+
+- Entry point names changed from `cs_*` (underscores) to `cs-*` (hyphens) per PEP convention.
+- `python_code_formatter.py` removed—functionality merged into `code_formatter.py`.
+- `setup.py` replaced by `pyproject.toml` as the authoritative build/tool config.
+
+#### Fixes
+
+- `check_british.py`, `check_grammar.py`, `check_spelling.py` were broken (called with a literal `"*.tex"` at module level). Rewritten as proper CLI tools accepting file/directory arguments.
+
+#### Improvements
+
+- `join_lines.py`, `remove_blank_lines.py`, `remove_comments.py` rewritten with OOP, type hints, and Google-style documentation strings.
+- `pyproject.toml` added with `[tool.black]`, `[tool.isort]`, `[tool.ruff]`, `[tool.mypy]`, `[tool.pytest]` sections.
+- Thirty unit tests added covering all rewritten document scripts.
+- New CLI entry points: `cs-check-british`, `cs-check-grammar`, `cs-check-spelling`.
+- `requirements.txt` updated and cleaned.
+
+---
+
+### Version 1.0.0—2025-07-17
 
 #### **Document Management Services**
 

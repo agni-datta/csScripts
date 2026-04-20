@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
-"""
-Directory Indexer Module
+"""Recursively index a directory tree and write metadata to ``index.json``.
 
-This module provides functionality to recursively index a directory and all its subdirectories,
-generating a comprehensive JSON index file with detailed metadata for every file and folder.
+Traverses a directory (defaulting to the current working directory) and
+collects detailed metadata for every file and subdirectory: name, absolute
+path, size, creation/modification/access timestamps, inode, permissions, and
+more.  The result is written as a pretty-printed JSON file.
 
-Features:
-- Recursive directory traversal
-- Comprehensive metadata extraction
-- Structured index generation
-- JSON output formatting
-- Progress reporting
+Usage::
 
-The module is designed with a service-oriented architecture for easy extension and maintenance.
+    # Index the current directory
+    python -m scripts.document.directory_indexer
 
-Usage:
-    python3 update_index.py
+    # Library usage against a specific path
+    >>> from scripts.document.directory_indexer import DirectoryIndexingService
+    >>> DirectoryIndexingService(target_directory_path="/path/to/docs").execute_indexing_process()
 
-Example:
-    >>> service = DirectoryIndexingService()
-    >>> service.execute_indexing_process()
+Example::
+
+    $ python -m scripts.document.directory_indexer
+    Indexing directory: /path/to/docs
+    Index written to /path/to/docs/index.json
 """
 
 import datetime
@@ -70,7 +70,6 @@ class FileSystemMetadataExtractionService:
         """
         entry_statistics = filesystem_entry_path.stat()
 
-        # Build comprehensive metadata dictionary
         entry_metadata = {
             "name": filesystem_entry_path.name,
             "path": str(filesystem_entry_path.resolve()),
@@ -212,7 +211,6 @@ class DirectoryIndexingService:
         )
         self.output_filename = output_filename
 
-        # Initialize component services
         self.traversal_service = FileSystemTraversalService(self.target_directory_path)
         self.metadata_service = FileSystemMetadataExtractionService()
         self.index_construction_service = DirectoryIndexConstructionService()
@@ -225,27 +223,19 @@ class DirectoryIndexingService:
         """
         Execute the complete directory indexing process.
         """
-        # Display start message
         self.feedback_service.display_indexing_start_message(self.target_directory_path)
 
-        # Collect all file system entries
         filesystem_entries = self.traversal_service.collect_all_filesystem_entries()
 
-        # Process each entry
         for entry_path in filesystem_entries:
-            # Extract metadata
             entry_metadata = self.metadata_service.extract_entry_metadata(entry_path)
 
-            # Add to index
             self.index_construction_service.add_entry_to_index(entry_metadata)
 
-        # Get the complete index
         complete_index = self.index_construction_service.get_complete_index()
 
-        # Write the index to file
         self.writer_service.write_index_to_file(complete_index)
 
-        # Display completion message
         self.feedback_service.display_indexing_completion_message(
             self.writer_service.output_file_path
         )

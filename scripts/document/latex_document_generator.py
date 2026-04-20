@@ -1,30 +1,41 @@
 #!/usr/bin/env python3
-"""
-LaTeX Document Generator Module
+"""Compile a LaTeX document with ``latexmk`` and run auxiliary tools as needed.
 
-This module provides tools for generating LaTeX documents programmatically. It supports
-template-based document creation, section and content management, and batch file output.
+Invokes ``latexmk -pdf -lualatex -synctex=1`` for the main compilation pass
+and, when the corresponding artefact files do not yet exist, also runs
+``biber`` (bibliography), ``makeglossaries``, and ``makeindex`` in parallel
+using a thread pool.  All output is logged to a date-stamped file.
 
-Features:
-- Automated LaTeX document generation
-- Template and section management
-- Batch file creation
-- Customizable document structure
-- Command-line and library usage
+Usage::
 
-Example:
-    >>> service = LatexDocumentCompilationService()
-    >>> service.compile_document("output.tex")
+    # Compile a document
+    python -m scripts.document.latex_document_generator paper.tex
+
+    # Compile with a clean slate (remove previous artefacts first)
+    python -m scripts.document.latex_document_generator --clean paper.tex
+
+    # Limit parallelism
+    python -m scripts.document.latex_document_generator --max-workers 4 paper.tex
+
+Dependencies:
+    latexmk, biber, makeglossaries, makeindex must be available on ``$PATH``
+    (all are included in a full TeX Live or MiKTeX installation).
+
+Example::
+
+    $ python -m scripts.document.latex_document_generator thesis/main.tex
+    Starting LaTeX document compilation...
+    Compilation completed successfully in 12.34 seconds.
 """
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import logging
+from pathlib import Path
 import shutil
 import subprocess
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from typing import List, Optional
 
 
@@ -76,7 +87,6 @@ class LoggingConfigurationService:
         Args:
             log_file_path: Path to the log file.
         """
-        # Configure file logging
         logging.basicConfig(
             level=logging.DEBUG,
             filename=str(log_file_path),
@@ -84,7 +94,6 @@ class LoggingConfigurationService:
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
 
-        # Add console handler for INFO level and above
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(
@@ -233,13 +242,11 @@ class ParallelCompilationService:
             LatexCompilationError: If an error occurs during parallel compilation.
         """
         try:
-            # Clean previous artifacts if requested
             if clean_previous_artifacts:
                 self.compilation_tool_service.clean_compilation_artifacts(
                     input_file_path
                 )
 
-            # Execute compilation and auxiliary tool tasks in parallel
             with ThreadPoolExecutor(
                 max_workers=self.maximum_worker_threads
             ) as thread_executor:
@@ -252,7 +259,6 @@ class ParallelCompilationService:
                     input_file_path,
                 )
 
-                # Wait for both tasks to complete
                 main_compilation_task.result()
                 auxiliary_tools_task.result()
 
@@ -286,7 +292,6 @@ class LatexDocumentCompilationService:
         self.clean_previous_artifacts = clean_previous_artifacts
         self.maximum_worker_threads = maximum_worker_threads
 
-        # Initialize component services
         self.parallel_compilation_service = ParallelCompilationService(
             maximum_worker_threads
         )
@@ -304,7 +309,6 @@ class LatexDocumentCompilationService:
         Returns:
             True if compilation was successful, False otherwise.
         """
-        # Use provided input file path or the one from initialization
         effective_input_file_path = input_file_path or self.input_file_path
 
         if not effective_input_file_path:
@@ -312,28 +316,21 @@ class LatexDocumentCompilationService:
             return False
 
         try:
-            # Validate input file exists
             self._validate_input_file_exists(effective_input_file_path)
 
-            # Set up logging
             self._configure_logging_system()
 
-            # Check dependencies
             self._verify_required_tools_installed()
 
-            # Log start of compilation
             logging.info("Starting LaTeX document compilation...")
             print("Starting LaTeX document compilation...")
 
-            # Track compilation time
             start_time = time.time()
 
-            # Execute compilation tasks in parallel
             self.parallel_compilation_service.execute_compilation_tasks_in_parallel(
                 effective_input_file_path, self.clean_previous_artifacts
             )
 
-            # Calculate and log completion time
             end_time = time.time()
             compilation_duration = end_time - start_time
 
@@ -410,20 +407,17 @@ class LatexDocumentCompilationApplicationLauncher:
         Returns:
             Exit code: 0 for success, 1 for failure.
         """
-        # Parse command-line arguments
         args = CommandLineArgumentParser.parse_command_line_arguments()
         input_file_path = Path(args.input_file)
         clean_previous_artifacts = args.clean
         maximum_worker_threads = args.max_workers
 
-        # Create and run the compilation service
         compilation_service = LatexDocumentCompilationService(
             input_file_path=input_file_path,
             clean_previous_artifacts=clean_previous_artifacts,
             maximum_worker_threads=maximum_worker_threads,
         )
 
-        # Execute compilation and return appropriate exit code
         compilation_successful = compilation_service.compile_document()
         return 0 if compilation_successful else 1
 

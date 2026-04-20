@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 FileOps: Interactive and CLI file utility for Linux and macOS.
@@ -59,13 +58,16 @@ import argparse
 import dataclasses
 import fnmatch
 import logging
+from logging.handlers import RotatingFileHandler
 import os
+from pathlib import Path
 import shutil
+from subprocess import CalledProcessError
+from subprocess import PIPE
+from subprocess import Popen
+from subprocess import run
 import sys
 import textwrap
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
-from subprocess import PIPE, CalledProcessError, Popen, run
 from typing import Iterable, Iterator, List, Optional, Sequence, Tuple
 
 
@@ -790,15 +792,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="fileops",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=textwrap.dedent(
-            """\
+        description=textwrap.dedent("""\
             FileOps: interactive and CLI file utility
 
             Modes:
               1) Interactive: run with no subcommand.
               2) Non-interactive: use subcommands below.
-            """
-        ),
+            """),
     )
     sub = p.add_subparsers(dest="cmd")
 

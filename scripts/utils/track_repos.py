@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
-"""
-track_repos.py
+"""Discover and display the status of every Git repository in a directory tree.
 
-This script provides an object-oriented interface for interactively discovering all Git repositories
-under the current directory, displaying their status, branch, and sync state, and allowing the user
-to select which repositories to check. Output is colorized for clarity.
+Walks the current directory recursively, finds all Git repositories, and for
+each one displays the current branch, whether it has uncommitted changes, and
+whether it is ahead of or behind its remote.  The user can interactively
+select a subset of repositories to check, or check all of them at once.
+Output is colourised for clarity.
 
-Usage:
-    python track_repos.py
+Usage::
+
+    python -m scripts.utils.track_repos
+
+Example::
+
+    $ python -m scripts.utils.track_repos
+    Discovered 5 repositories.
+    [1] All
+    [2] /home/user/projects/repo-a  (main, clean, up-to-date)
+    [3] /home/user/projects/repo-b  (feature/x, 2 uncommitted, 3 ahead)
+    ...
 """
 
 import os
@@ -220,7 +231,6 @@ class RepositoryStatusPresenter:
         TerminalPrinter.print_repo_header(self.repo.name, self.repo.path)
         TerminalPrinter.print_horizontal_rule()
 
-        # Branch or detached HEAD
         branch: Optional[str] = self.repo.get_current_branch()
         if branch:
             print(
@@ -234,7 +244,6 @@ class RepositoryStatusPresenter:
                 f"{TerminalColor.RED}(detached HEAD at {head_commit}){TerminalColor.RESET}"
             )
 
-        # Working tree status
         status_lines: List[str] = self.repo.get_working_tree_status()
         if not status_lines:
             TerminalPrinter.print_success("✔ Clean")
@@ -243,7 +252,6 @@ class RepositoryStatusPresenter:
             for line in status_lines:
                 print(f"{TerminalColor.MAGENTA}  | {line}{TerminalColor.RESET}")
 
-        # Ahead/behind info
         if self.repo.has_upstream():
             ahead, behind = self.repo.get_ahead_behind()
             if ahead > 0 or behind > 0:
@@ -288,7 +296,6 @@ class GitRepositoryFinder:
         for dirpath, dirnames, _ in os.walk(self.root_dir):
             if ".git" in dirnames:
                 repo_paths.append(os.path.abspath(dirpath))
-                # Don't recurse into .git directories
                 dirnames.remove(".git")
         return sorted(set(repo_paths))
 

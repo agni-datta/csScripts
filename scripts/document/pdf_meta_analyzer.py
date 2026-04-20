@@ -1,19 +1,48 @@
 #!/usr/bin/env python3
+"""Analyse PDF metadata, fonts, and font-embedding status with rich terminal output.
+
+Extracts and displays:
+
+* **Document metadata** – author, title, creation date, producer, and other
+  XMP/Info-dictionary fields (via ``PyPDF2``).
+* **Font summary** – all fonts referenced in the document and whether each is
+  embedded, with subset detection (via ``PyPDF2`` object-tree walking).
+* **Font-usage by page** – per-span font name and point size (via
+  ``PyMuPDF`` / ``fitz``).
+
+The tool accepts a path on the command line or presents an interactive table
+of discovered PDFs when run without arguments.
+
+Usage::
+
+    # Analyse a specific file
+    python -m scripts.document.pdf_meta_analyzer paper.pdf
+
+    # Interactive picker from all PDFs under a directory
+    python -m scripts.document.pdf_meta_analyzer /path/to/docs/
+
+    # Interactive picker from the current directory (no argument)
+    python -m scripts.document.pdf_meta_analyzer
+
+Dependencies:
+    PyPDF2 >= 3.0  (``pip install PyPDF2``)
+    PyMuPDF        (``pip install pymupdf``)
+    rich           (``pip install rich``)
+
+Example::
+
+    $ python -m scripts.document.pdf_meta_analyzer thesis.pdf
+    ╭─────────────────────────────╮
+    │  PDF Meta Analyzer          │
+    │  File: thesis.pdf           │
+    ╰─────────────────────────────╯
+    ... (metadata table) ...
+    ... (fonts summary table) ...
+    ... (font usage by page table) ...
 """
-pdf_meta_analyzer.py
 
-A modular, object-oriented tool for analyzing PDF files for metadata, font usage, and font embedding status.
-Provides interactive file selection and rich terminal output.
-
-Modules:
-    pdf_meta_analyzer: Core PDF analysis logic.
-    file_picker: Interactive file selection.
-    output: Rich terminal output utilities.
-    app: Application entry point.
-"""
-
-import sys
 from pathlib import Path
+import sys
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import fitz

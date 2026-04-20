@@ -1,20 +1,31 @@
 #!/usr/bin/env python3
-"""
-Directory Batch Renamer Module
+"""Move leading English articles to the end of directory names.
 
-This module provides tools for batch renaming directories in a given path. It supports
-customizable renaming patterns, dry-run mode, and logging of all changes.
+Renames directories so that a leading article (*A*, *An*, *The*) is moved to
+the end, separated by a comma.  For example::
 
-Features:
-- Batch renaming of directories
-- Customizable renaming rules
-- Dry-run mode for previewing changes
-- Logging of all renaming operations
-- Error handling for conflicts
+    The Great Gatsby  →  Great Gatsby, The
+    A Room with a View  →  Room with a View, A
 
-Example:
-    >>> service = DirectoryBatchRenamingService()
-    >>> service.execute_renaming_process()
+This is a common library/archive convention that groups items by their
+meaningful first word rather than the article.
+
+All renames are logged to a timestamped file.
+
+Usage::
+
+    # Interactive (processes current directory)
+    python -m scripts.file_ops.directory_batch_renamer
+
+    # Library usage
+    >>> from scripts.file_ops.directory_batch_renamer import DirectoryBatchRenamingService
+    >>> DirectoryBatchRenamingService().execute_renaming_process()
+
+Example::
+
+    $ python -m scripts.file_ops.directory_batch_renamer
+    Renamed: The Beatles -> Beatles, The
+    Renamed: A Hard Day's Night -> Hard Day's Night, A
 """
 
 import logging
@@ -85,15 +96,12 @@ class DirectoryNameTransformationService:
         """
         name_components = directory_name.split()
 
-        # Check if the first word is an article
         if not name_components or name_components[0] not in self.recognized_articles:
             return None
 
-        # Move the article to the end
         first_article = name_components[0]
         remaining_words = name_components[1:]
 
-        # Format: "Rest of name, Article"
         transformed_name = f"{' '.join(remaining_words)}, {first_article}"
 
         return transformed_name
@@ -161,7 +169,6 @@ class DirectoryBatchRenamingService:
             self.target_directory_path / f"{self.target_directory_path.name}.log"
         )
 
-        # Initialize component services
         self.article_provider = ArticleDefinitionProvider()
         self.logging_service = LoggingConfigurationService()
         self.transformation_service = DirectoryNameTransformationService(
@@ -169,7 +176,6 @@ class DirectoryBatchRenamingService:
         )
         self.file_system_service = FileSystemOperationService()
 
-        # Configure logging
         self.logging_service.configure_logging_system(self.log_file_path)
 
     def execute_renaming_process(self) -> None:
@@ -180,17 +186,14 @@ class DirectoryBatchRenamingService:
             f"Starting directory renaming process in {self.target_directory_path}"
         )
 
-        # Get all directories in the target path
         directories = self.file_system_service.get_directories_in_path(
             self.target_directory_path
         )
 
-        # Track statistics
         renamed_count = 0
         unchanged_count = 0
         failed_count = 0
 
-        # Process each directory
         for directory_path in directories:
             directory_name = directory_path.name
             transformed_name = self.transformation_service.transform_directory_name(
@@ -198,12 +201,10 @@ class DirectoryBatchRenamingService:
             )
 
             if transformed_name is None:
-                # No transformation needed
                 logging.info(f"No change needed for '{directory_name}'")
                 unchanged_count += 1
                 continue
 
-            # Attempt to rename the directory
             if self.file_system_service.rename_directory(
                 directory_path, transformed_name
             ):
@@ -211,7 +212,6 @@ class DirectoryBatchRenamingService:
             else:
                 failed_count += 1
 
-        # Log summary
         logging.info(
             f"Directory renaming process completed: "
             f"{renamed_count} renamed, {unchanged_count} unchanged, {failed_count} failed"

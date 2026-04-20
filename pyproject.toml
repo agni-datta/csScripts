@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "csScripts"
+version = "1.1.0"
+description = "Utility scripts for academic and research workflows"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Agni Datta", email = "agnidatta.org@gmail.com" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing :: Markup :: LaTeX",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "click>=8.0",
+    "colorama>=0.4.4",
+    # PDF analysis
+    "PyPDF2>=3.0",
+    "pymupdf>=1.23",           # fitz – font/span extraction in pdf_meta_analyzer
+    "rich>=13.0",              # terminal tables in pdf_meta_analyzer
+    # Spell / grammar checking
+    "pyspellchecker>=0.7",     # British-spelling and spell-check backends
+    "language-tool-python>=2.7",  # Grammar checking via local LanguageTool server
+    "pylatexenc>=2.10",        # LaTeX → plain-text stripping for grammar checker
+    # File renaming
+    "titlecase>=2.4",          # Title-case transformation in case_sensitive_file_renamer
+    # Archive compression
+    "tqdm>=4.64",              # Progress bar in folder_compressor
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=24.0",
+    "isort>=5.12",
+    "ruff>=0.4",
+    "mypy>=1.0",
+]
+image = [
+    "Pillow>=10.0",
+    "numpy>=1.24",
+]
+
+[project.scripts]
+cs-book-generator = "scripts.document.book_structure_generator:main"
+cs-latex-cleaner = "scripts.document.latex_auxiliary_cleaner:main"
+cs-file-renamer = "scripts.file_ops.file_batch_renamer:main"
+cs-pdf-renamer = "scripts.file_ops.pdf_batch_renamer:main"
+cs-code-formatter = "scripts.utils.code_formatter:main"
+cs-check-british = "scripts.document.check_british:main"
+cs-check-grammar = "scripts.document.check_grammar:main"
+cs-check-spelling = "scripts.document.check_spelling:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scripts*"]
+
+# ── Black ──────────────────────────────────────────────────────────────────────
+[tool.black]
+line-length = 88
+target-version = ["py310", "py311", "py312"]
+
+# ── isort ──────────────────────────────────────────────────────────────────────
+[tool.isort]
+profile = "black"
+line_length = 88
+
+# ── Ruff ───────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
+# ── mypy ───────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+
+# ── pytest ─────────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

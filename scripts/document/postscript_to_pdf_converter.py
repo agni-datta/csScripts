@@ -1,31 +1,39 @@
 #!/usr/bin/env python3
-"""
-PostScript to PDF Converter Module
+"""Convert PostScript (``.ps``) files to PDF using Ghostscript.
 
-This module provides functionality to convert PostScript (.ps) files to PDF format.
-It uses Ghostscript (gs) as the underlying conversion engine and includes features for:
-- Batch conversion of multiple files
-- Quality and compression settings
-- Output directory management
-- Progress tracking
-- Error handling and logging
+Finds all ``.ps`` files in the current working directory and converts them to
+PDF with high-quality prepress settings (embedded fonts, subsetting,
+compression).  Output PDFs are written to a ``pdf_output/`` subdirectory by
+default.
 
-The converter can be used both as a command-line tool and as a library in other Python
-projects. It's particularly useful for converting legacy PostScript documents to
-the more widely supported PDF format.
+Usage::
+
+    # Convert all .ps files in the current directory
+    python -m scripts.document.postscript_to_pdf_converter
+
+    # Library usage with a custom output directory
+    >>> from pathlib import Path
+    >>> from scripts.document.postscript_to_pdf_converter import (
+    ...     PostscriptToPdfConversionService
+    ... )
+    >>> PostscriptToPdfConversionService(Path("out")).convert_all_files_in_directory()
 
 Dependencies:
-    - Ghostscript (gs): External command-line tool for PostScript processing
-    - Python standard library: os, subprocess
+    ``gs`` (Ghostscript) must be on ``$PATH``.  Install with
+    ``brew install ghostscript`` or ``sudo apt install ghostscript``.
 
-Example:
-    >>> service = PostscriptToPdfConversionService()
-    >>> service.convert_single_file("input.ps", "output.pdf")
+Example::
+
+    $ cd ~/papers && python -m scripts.document.postscript_to_pdf_converter
+    INFO - Found 2 PostScript files to convert
+    INFO - Successfully converted draft.ps to pdf_output/draft.pdf
+    INFO - Conversion complete: 2 successful, 0 failed
 """
 
 import logging
 from pathlib import Path
-from subprocess import CalledProcessError, run
+from subprocess import CalledProcessError
+from subprocess import run
 from typing import List, Optional
 
 
@@ -69,7 +77,6 @@ class GhostscriptConversionService:
         logging.info(f"Starting conversion of {input_file_path} to {output_file_path}")
 
         try:
-            # Execute Ghostscript with high-quality settings for PDF conversion
             run(
                 [
                     "gs",
@@ -143,12 +150,10 @@ class PostscriptToPdfConversionService:
         self.source_directory_path = Path.cwd()
         self.output_directory_path = output_directory_path or Path("pdf_output")
 
-        # Initialize services
         self.logging_service = LoggingConfigurationService()
         self.conversion_service = GhostscriptConversionService()
         self.file_system_service = FileSystemOperationService()
 
-        # Configure logging
         self.logging_service.configure_logging_system()
 
     def convert_single_file(
@@ -163,20 +168,16 @@ class PostscriptToPdfConversionService:
         Returns:
             True if conversion was successful, False otherwise.
         """
-        # Ensure output directory exists
         self.file_system_service.ensure_directory_exists(output_file_path.parent)
 
-        # Perform conversion
         return self.conversion_service.convert_postscript_to_pdf(
             input_file_path, output_file_path
         )
 
     def convert_all_files_in_directory(self) -> None:
         """Convert all PostScript files in the source directory to PDF files in the output directory."""
-        # Ensure output directory exists
         self.file_system_service.ensure_directory_exists(self.output_directory_path)
 
-        # Find all PostScript files
         postscript_files = self.file_system_service.find_postscript_files(
             self.source_directory_path
         )
@@ -187,7 +188,6 @@ class PostscriptToPdfConversionService:
 
         logging.info(f"Found {len(postscript_files)} PostScript files to convert")
 
-        # Convert each file
         successful_conversions = 0
         failed_conversions = 0
 
@@ -201,7 +201,6 @@ class PostscriptToPdfConversionService:
             else:
                 failed_conversions += 1
 
-        # Log summary
         logging.info(
             f"Conversion complete: {successful_conversions} successful, {failed_conversions} failed"
         )

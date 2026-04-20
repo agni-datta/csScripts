@@ -1,20 +1,39 @@
 #!/usr/bin/env python3
+"""Delete LaTeX compilation artefacts from a directory tree.
+
+Every LaTeX compilation run produces dozens of auxiliary files (``.aux``,
+``.log``, ``.toc``, ``.bbl``, ``.fls``, ``.synctex.gz``, and many more).
+This tool recursively removes all of them from a target directory (defaulting
+to the current working directory) while logging each deletion with a timestamp.
+
+File deletions run in parallel (up to 18 worker threads) for speed on
+large projects.  A timestamped log file is created in the same directory as
+the script.
+
+Usage::
+
+    # Clean the current working directory
+    cs-latex-cleaner
+
+    # Library usage against a specific project
+    >>> from scripts.document.latex_auxiliary_cleaner import (
+    ...     LatexAuxiliaryFileCleaningService
+    ... )
+    >>> LatexAuxiliaryFileCleaningService().execute_cleaning_process("/path/to/project")
+
+Example::
+
+    $ cd ~/papers/phd-thesis
+    $ cs-latex-cleaner
+    Starting LaTeX auxiliary file cleaning process...
+    LaTeX auxiliary file cleaning process completed.
+    Log file created at: /path/to/latex_auxiliary_files_deleted_2026-04-21.log
 """
-LaTeX Auxiliary File Cleaner Module
 
-This module provides functionality to clean up LaTeX auxiliary files that are
-generated during the compilation process. It can recursively search directories
-and delete files with specified extensions.
-
-Example:
-    >>> cleaner = LatexAuxiliaryFileCleaningService()
-    >>> cleaner.execute_cleaning_process("/path/to/latex/project")
-"""
-
-import logging
-import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import logging
+import os
 from typing import List, Optional
 
 
@@ -143,7 +162,6 @@ class FileOperationsService:
             target_directory_path: Directory to search for files.
             target_file_extensions: List of file extensions to delete.
         """
-        # Use ThreadPoolExecutor for parallel file deletion
         with ThreadPoolExecutor(max_workers=18) as parallel_executor:
             for current_directory_path, _, file_names_list in os.walk(
                 target_directory_path
@@ -296,21 +314,17 @@ class LatexAuxiliaryFileCleaningService:
             target_directory_path: Directory to clean. If None, uses current directory.
             file_extensions_to_delete: File extensions to delete. If None, uses defaults.
         """
-        # Use current directory if none specified
         effective_target_directory = target_directory_path or os.getcwd()
 
-        # Use default extensions if none specified
         effective_file_extensions = (
             file_extensions_to_delete
             or self.extension_provider.get_default_latex_auxiliary_extensions()
         )
 
-        # Clean the specified directory
         self.file_operations_service.delete_matching_files_recursively(
             effective_target_directory, effective_file_extensions
         )
 
-        # Also clean the script directory if different from target
         script_directory_path = os.path.dirname(__file__)
         if effective_target_directory != script_directory_path:
             self.file_operations_service.delete_matching_files_recursively(

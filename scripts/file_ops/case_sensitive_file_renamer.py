@@ -1,27 +1,36 @@
 #!/usr/bin/env python3
+"""Batch-rename files by applying a case transformation to their names.
+
+Applies one of several case-transformation strategies (uppercase, lowercase,
+title-case, sentence-case) to every file in a directory, with dry-run
+preview and timestamped logging of all changes.
+
+Requires the ``titlecase`` package for title-casing: ``pip install titlecase``.
+
+Usage::
+
+    # Interactive (prompts for directory and transformation mode)
+    python -m scripts.file_ops.case_sensitive_file_renamer
+
+    # Library usage
+    >>> from scripts.file_ops.case_sensitive_file_renamer import (
+    ...     FilenameCaseTransformationService
+    ... )
+    >>> FilenameCaseTransformationService().execute_transformation_process()
+
+Example::
+
+    $ python -m scripts.file_ops.case_sensitive_file_renamer
+    Select transformation: [1] Uppercase  [2] Lowercase  [3] Titlecase
+    > 3
+    Renamed: my document.pdf -> My Document.pdf
+    ...
 """
-Case-Sensitive File Renamer Module
 
-This module provides advanced batch renaming capabilities for files, with special handling
-for case sensitivity. It is useful for renaming files in bulk where case changes matter
-(e.g., on case-sensitive filesystems or for codebase normalization).
-
-Features:
-- Batch renaming with case sensitivity
-- Customizable renaming patterns
-- Dry-run and preview support
-- Logging of renaming operations
-- Conflict and error handling
-
-Example:
-    >>> service = FilenameCaseTransformationService()
-    >>> service.execute_transformation_process()
-"""
-
+from datetime import datetime
 import logging
 import os
 import sys
-from datetime import datetime
 from typing import Dict, List, Protocol, Type
 
 from titlecase import titlecase
@@ -256,7 +265,6 @@ class FileOperationService:
         new_file_path = os.path.join(directory_path, new_filename)
 
         try:
-            # Rename the file and log the change
             os.rename(original_file_path, new_file_path)
             logging.info(f"Renamed '{original_filename}' to '{new_filename}'")
             return True
@@ -300,18 +308,15 @@ class FilenameCaseTransformationService:
     def execute_transformation_process(self) -> None:
         """Execute the complete filename transformation process."""
         try:
-            # Collect user input
             transformation_choice = self.input_service.collect_transformation_choice()
             target_file_extensions = self.input_service.collect_file_extensions()
 
-            # Create transformation strategy
             transformation_strategy = (
                 TransformationStrategyFactory.create_strategy_from_choice(
                     transformation_choice
                 )
             )
 
-            # Process files
             self._process_files_in_directory(
                 transformation_strategy, target_file_extensions
             )
@@ -337,22 +342,18 @@ class FilenameCaseTransformationService:
             for filename in os.listdir(self.target_directory_path):
                 print(f"Found file: {filename}")
 
-                # Skip files that don't match target extensions
                 if not any(filename.endswith(ext) for ext in target_extensions):
                     print(f"Skipping file: {filename} (not in specified extensions)")
                     continue
 
-                # Transform the filename
                 transformed_filename = transformation_strategy.transform_filename(
                     filename
                 )
 
-                # Skip if no change
                 if transformed_filename == filename:
                     print(f"Skipping file: {filename} (no change needed)")
                     continue
 
-                # Rename the file
                 print(f"Renaming '{filename}' to '{transformed_filename}'")
                 self.file_operation_service.rename_file_with_logging(
                     self.target_directory_path, filename, transformed_filename

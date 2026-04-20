@@ -1,30 +1,39 @@
 #!/usr/bin/env python3
-"""
-PDF Linearizer Module
+"""Optimise PDF files for fast web delivery by linearising them with ``qpdf``.
 
-This module provides functionality to optimize PDF files for web viewing by linearizing them.
-It recursively processes PDF files in a directory structure, making them more efficient for
-web delivery and faster initial page loading.
+A *linearised* (also called *fast-web-view*) PDF allows a browser or PDF
+viewer to begin rendering the first page before the entire file has finished
+downloading.  This script recursively finds every ``.pdf`` under a directory
+and rewrites each one in-place using ``qpdf --linearize --replace-input``.
 
-The module uses qpdf to perform the linearization and includes features for:
-- Recursive directory scanning
-- Dry-run mode for testing
-- File filtering capabilities
-- Detailed logging of changes
-- User confirmation before processing
+All operations are logged to ``fastviewpdf.log`` in the target directory.  A
+simulation (dry-run) mode is available for previewing what would be changed
+without touching any files.
+
+Usage::
+
+    # Linearise all PDFs in the current directory (interactive confirmation)
+    python -m scripts.document.pdf_linearizer
+
+    # Library usage with dry-run
+    >>> from scripts.document.pdf_linearizer import PDFLinearizationService
+    >>> PDFLinearizationService(simulation_mode=True).execute_linearization_process()
 
 Dependencies:
-    - qpdf: External command-line tool for PDF processing
-    - Python standard library: os, subprocess, datetime
+    ``qpdf`` must be on ``$PATH``.  Install with ``brew install qpdf`` or
+    ``sudo apt install qpdf``.
 
-Example:
-    >>> service = PDFLinearizationService(simulation_mode=True)
-    >>> service.execute_linearization_process()
+Example::
+
+    $ python -m scripts.document.pdf_linearizer
+    Found 5 PDF files under /path/to/docs.
+    Are you sure you want to proceed? [y/N]: y
+    Linearization complete: 5 files processed successfully, 0 files failed.
 """
 
+from datetime import datetime
 import os
 import subprocess
-from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 
@@ -182,17 +191,14 @@ class PDFLinearizationToolService:
         Returns:
             True if linearization was successful or simulated, False otherwise.
         """
-        # Get file metadata before linearization
         before_metadata = FileMetadata.extract_file_metadata(pdf_file_path)
 
-        # If in simulation mode, just log and return
         if self.simulation_mode:
             self.logging_service.log_simulated_transformation(
                 pdf_file_path, before_metadata
             )
             return True
 
-        # Perform actual linearization
         try:
             subprocess.run(
                 ["qpdf", "--linearize", "--replace-input", pdf_file_path],
@@ -200,10 +206,8 @@ class PDFLinearizationToolService:
                 capture_output=True,
             )
 
-            # Get file metadata after linearization
             after_metadata = FileMetadata.extract_file_metadata(pdf_file_path)
 
-            # Log the transformation
             self.logging_service.log_file_transformation(
                 pdf_file_path, before_metadata, after_metadata
             )
@@ -271,7 +275,6 @@ class PDFLinearizationService:
         self.simulation_mode = simulation_mode
         self.file_filter = file_filter
 
-        # Initialize services
         self.discovery_service = PDFFileDiscoveryService()
         self.logging_service = OperationLoggingService(self.log_file_path)
         self.linearization_tool_service = PDFLinearizationToolService(
@@ -283,19 +286,16 @@ class PDFLinearizationService:
         """
         Execute the complete PDF linearization process.
         """
-        # Discover PDF files
         discovered_pdf_files = self.discovery_service.discover_pdf_files(
             self.target_directory_path, self.file_filter
         )
 
-        # Check if any files were found
         if not discovered_pdf_files:
             self.user_interaction_service.display_information_message(
                 "No PDF files found."
             )
             return
 
-        # Display information and request confirmation
         self.user_interaction_service.display_information_message(
             f"Found {len(discovered_pdf_files)} PDF files under {self.target_directory_path}."
         )
@@ -313,7 +313,6 @@ class PDFLinearizationService:
             )
             return
 
-        # Process each PDF file
         successful_count = 0
         failed_count = 0
 
@@ -323,7 +322,6 @@ class PDFLinearizationService:
             else:
                 failed_count += 1
 
-        # Display summary
         self.user_interaction_service.display_information_message(
             f"\nLinearization complete: {successful_count} files processed successfully, "
             f"{failed_count} files failed."
@@ -357,8 +355,6 @@ def main() -> None:
     """
     Main entry point for the PDF linearizer script.
     """
-    # Example: Filter only PDFs greater than 100KB
-    # def size_filter(path): return os.path.getsize(path) > 100 * 1024
 
     application_launcher = PDFLinearizationApplicationLauncher()
     application_launcher.launch_application(

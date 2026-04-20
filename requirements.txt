@@ -1,20 +1,14 @@
-# Core dependencies
-pathlib2>=2.3.0
-click>=8.0.0
+click>=8.0
 colorama>=0.4.4
+PyPDF2>=3.0
 
-# File processing
-PyPDF2>=3.0.0
-reportlab>=3.6.0
+[dev]
+pytest>=7.0
+pytest-cov>=4.0
+black>=24.0
+isort>=5.12
+ruff>=0.4
+mypy>=1.0
 
-# Development and testing
-pytest>=7.0.0
-black>=22.0.0
-flake8>=4.0.0
-mypy>=0.950
-
-# Optional: LaTeX processing
-# pylatex>=1.4.0
-
-# Optional: Image processing
-# Pillow>=9.0.0 
+[image]
+Pillow>=10.0

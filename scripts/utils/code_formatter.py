@@ -1,20 +1,35 @@
 #!/usr/bin/env python3
-"""
-Code Formatter Utility
+"""Format Python source files with ``isort`` and ``black``.
 
-This module provides functionality to format Python code according to Google's
-Python style guide using isort and black.
+Recursively discovers every ``.py`` file beneath a target directory and runs
+two passes:
 
-Features:
-- Automatic code formatting using industry-standard tools
-- Support for Google's Python style guide
-- Recursive directory processing
-- Configurable line length and formatting options
-- Detailed success/failure reporting
+1. **isort** – sorts and groups import statements according to the Google
+   profile.
+2. **black** – reformats code to a consistent style at the specified line
+   length (default 88 characters).
 
-Example:
-    >>> service = CodeFormattingService()
-    >>> service.format_directory_recursively("/path/to/project")
+Both tools must be installed and available on ``$PATH``.
+
+Usage::
+
+    # Format the current directory
+    cs-code-formatter
+
+    # Format a specific directory
+    cs-code-formatter /path/to/project
+
+    # Use a custom line length
+    cs-code-formatter --line-length 100 /path/to/project
+
+    # Library usage
+    >>> from scripts.utils.code_formatter import CodeFormattingService
+    >>> tracker = CodeFormattingService().format_directory_recursively("/path/to/project")
+
+Example::
+
+    $ cs-code-formatter scripts/
+    Formatted 12 of 12 files successfully.
 """
 
 import os
@@ -207,7 +222,6 @@ class CodeFormattingService:
         Returns:
             Tuple containing (success status, success or error message).
         """
-        # Run isort for import sorting
         isort_command = self.configuration_provider.get_isort_command_arguments(
             file_path
         )
@@ -218,7 +232,6 @@ class CodeFormattingService:
         if not isort_success:
             return False, f"isort failed: {isort_output}"
 
-        # Run black for code formatting
         black_command = self.configuration_provider.get_black_command_arguments(
             file_path
         )
@@ -243,15 +256,12 @@ class CodeFormattingService:
         Returns:
             FormattingResultTracker containing the results of all formatting operations.
         """
-        # Find all Python files in the directory
         python_file_paths = self.file_discovery_service.find_python_files_recursively(
             directory_path
         )
 
-        # Create a result tracker
         result_tracker = FormattingResultTracker()
 
-        # Format each file and track results
         for file_path in python_file_paths:
             success, message = self.format_single_file(file_path)
             result_tracker.add_result(file_path, success, message)
@@ -272,12 +282,10 @@ class ResultDisplayService:
         Args:
             result_tracker: Tracker containing formatting results.
         """
-        # Display summary
         success_count = result_tracker.get_success_count()
         total_count = result_tracker.get_total_count()
         print(f"Formatted {success_count} of {total_count} files successfully.")
 
-        # Display failures if any
         failures = result_tracker.get_failures()
         if failures:
             print("\nFailures:")
@@ -331,18 +339,14 @@ class CodeFormattingApplicationLauncher:
         """
         Launch the code formatting application.
         """
-        # Parse command-line arguments
         arguments = CommandLineArgumentParser.parse_command_line_arguments()
 
-        # Create formatting service
         formatting_service = CodeFormattingService(line_length=arguments["line_length"])
 
-        # Format directory and get results
         result_tracker = formatting_service.format_directory_recursively(
             arguments["directory_path"]
         )
 
-        # Display results
         ResultDisplayService.display_formatting_results(result_tracker)
 
 

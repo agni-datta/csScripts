@@ -1,46 +1,59 @@
 #!/usr/bin/env python3
-"""
-Image to Nord Palette Converter Service.
+"""Remap every pixel of an image to the closest Nord colour palette entry.
 
-This module provides comprehensive functionality for converting images to the Nord color
-palette using various processing modes and algorithms. It implements service-oriented
-architecture with clear separation of concerns for color math, palette operations,
-pixel mapping, and orchestration.
+The `Nord <https://www.nordtheme.com>`_ palette is a 16-colour Arctic-themed
+colour scheme.  This converter replaces each pixel in an input image with the
+perceptually closest Nord colour using CIELAB colour-space distance
+calculations.
 
-The converter supports multiple processing modes:
-- Exact mode: LAB nearest-color mapping with memory-aware tiling
-- Quantize mode: Pillow quantization with optional Floyd-Steinberg dithering
-- Auto mode: Automatically selects the best processing mode
+Three processing modes are available:
 
-Features:
-- High-quality color space conversions (sRGB, XYZ, LAB)
-- Memory-efficient tiling for large images
-- Alpha channel preservation
-- EXIF orientation correction
-- Configurable blend strength for softening effects
-- Support for multiple output formats (PNG, JPEG, WebP)
+* **exact** – Full LAB nearest-colour mapping; memory-aware tiling for
+  large images.  Highest quality.
+* **quantize** – Pillow palette quantisation with optional Floyd-Steinberg
+  dithering.  Faster for large images.
+* **auto** (default) – Chooses *exact* for small images and *quantize* for
+  large ones based on available memory.
+
+Alpha channels and EXIF orientation are preserved.
+
+Usage::
+
+    python -m scripts.utils.image_to_nord_converter photo.png
+
+    # Specify output path and blend strength
+    python -m scripts.utils.image_to_nord_converter photo.png -o out.png --blend 0.8
+
+    # Library usage
+    >>> from scripts.utils.image_to_nord_converter import ImageToNordConversionService
+    >>> from PIL import Image
+    >>> img = Image.open("photo.png")
+    >>> converter = ImageToNordConversionService()
+    >>> result = converter.convert_image_to_nord_palette(img)
+    >>> converter.save_converted_image(result, "out.png")
 
 Dependencies:
-    - numpy: For vectorized color space calculations
-    - pillow: For image I/O and processing operations
+    numpy >= 1.24  (``pip install numpy``)
+    Pillow >= 10.0  (``pip install Pillow``)
 
-Example:
-    >>> from image_to_nord_converter import ImageToNordConversionService
-    >>> converter = ImageToNordConversionService()
-    >>> result_image = converter.convert_image_to_nord_palette(input_image)
-    >>> converter.save_converted_image(result_image, "output.png")
+Example::
+
+    $ python -m scripts.utils.image_to_nord_converter wallpaper.jpg
+    Converting wallpaper.jpg (mode=auto) ...
+    Saved: wallpaper_nord.jpg
 """
 
 from __future__ import annotations
+
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
 import sys
 from typing import List, Tuple
 
-from PIL import Image, ImageOps
-
 import numpy as np
+from PIL import Image
+from PIL import ImageOps
 
 
 @dataclass(frozen=True)

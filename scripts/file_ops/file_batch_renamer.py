@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
-"""
-File Batch Renamer Module
+"""Batch-rename files in a directory with sequential numeric prefixes.
 
-This module provides tools for batch renaming files in a directory. It supports
-customizable renaming patterns, dry-run mode, and logging of all changes.
+Renames every file of a given extension in a directory to a zero-padded
+sequential name (e.g. ``001_original.pdf``, ``002_original.pdf``, …).
+All renames are logged to a timestamped log file.
 
-Features:
-- Batch renaming of files
-- Customizable renaming rules
-- Dry-run mode for previewing changes
-- Logging of all renaming operations
-- Error handling for file conflicts
+Usage::
 
-Example:
-    >>> renamer = FileBatchRenamingOrchestrator(file_extension=".txt")
-    >>> renamer.execute_renaming_operation()
+    # Interactive (prompts for directory, extension, and prefix)
+    cs-file-renamer
+
+    # Library usage
+    >>> from scripts.file_ops.file_batch_renamer import FileBatchRenamingOrchestrator
+    >>> FileBatchRenamingOrchestrator(file_extension=".jpg").execute_renaming_operation()
+
+Example::
+
+    $ cs-file-renamer
+    Enter directory path: /path/to/photos
+    Enter file extension (e.g. .jpg): .jpg
+    Enter prefix for renamed files: photo_
+    Renamed photo1.jpg -> 001_photo1.jpg
+    ...
 """
 
 import datetime
@@ -44,19 +51,16 @@ class FileSystemOperationsService:
         Returns:
             List of filenames with the specified extension, sorted alphabetically.
         """
-        # Ensure extension starts with a dot
         normalized_file_extension = target_file_extension
         if not normalized_file_extension.startswith("."):
             normalized_file_extension = f".{normalized_file_extension}"
 
-        # Get all files with the specified extension
         matching_file_list = [
             filename
             for filename in os.listdir(target_directory_path)
             if filename.endswith(normalized_file_extension)
         ]
 
-        # Sort files alphabetically
         matching_file_list.sort()
 
         return matching_file_list
@@ -185,7 +189,6 @@ class FilenameGenerationService:
         Args:
             file_extension: File extension to use for generated filenames.
         """
-        # Normalize file extension to include dot
         self.file_extension = file_extension
         if not self.file_extension.startswith("."):
             self.file_extension = f".{self.file_extension}"
@@ -226,13 +229,10 @@ class FileBatchRenamingOrchestrator:
                                   If None, uses the current directory.
             dry_run_mode: If True, simulates renaming without making changes.
         """
-        # Set target directory
         self.target_directory_path = target_directory_path or os.getcwd()
 
-        # Set dry run mode
         self.dry_run_mode = dry_run_mode
 
-        # Initialize components
         self.filename_generation_service = FilenameGenerationService(file_extension)
         self.file_system_service = FileSystemOperationsService()
         self.operation_logging_service = RenameOperationLoggingService(
@@ -271,21 +271,16 @@ class FileBatchRenamingOrchestrator:
         Returns:
             Tuple of (total_files, successful_renames, failed_renames).
         """
-        # Get files to rename
         rename_operations_plan = self._generate_rename_operation_plan()
 
-        # Track statistics
         total_file_count = len(rename_operations_plan)
         successful_rename_count = 0
         failed_rename_count = 0
 
-        # Execute rename operations
         for original_filename, target_filename in rename_operations_plan.items():
-            # Skip if old and new names are the same
             if original_filename == target_filename:
                 continue
 
-            # Perform rename operation (or simulate in dry run mode)
             if self.dry_run_mode:
                 operation_success, error_message = True, None
                 print(
@@ -298,19 +293,16 @@ class FileBatchRenamingOrchestrator:
                     )
                 )
 
-            # Log the operation
             self.operation_logging_service.log_rename_operation_result(
                 original_filename, target_filename, operation_success, error_message
             )
 
-            # Update statistics
             if operation_success:
                 successful_rename_count += 1
             else:
                 failed_rename_count += 1
                 print(f"Error renaming '{original_filename}': {error_message}")
 
-        # Log summary
         self.operation_logging_service.log_operation_summary(
             total_file_count, successful_rename_count, failed_rename_count
         )
@@ -385,11 +377,9 @@ class BatchRenamerApplicationLauncher:
         """Launch the batch renamer application."""
         self.user_interaction_service.display_application_header()
 
-        # Get user inputs
         file_extension = self.user_interaction_service.get_file_extension_from_user()
         dry_run_mode = self.user_interaction_service.get_dry_run_preference_from_user()
 
-        # Create orchestrator and execute operation
         renaming_orchestrator = FileBatchRenamingOrchestrator(
             file_extension=file_extension, dry_run_mode=dry_run_mode
         )
@@ -401,7 +391,6 @@ class BatchRenamerApplicationLauncher:
             renaming_orchestrator.execute_renaming_operation()
         )
 
-        # Display summary
         self.user_interaction_service.display_operation_summary(
             total_files,
             successful_renames,

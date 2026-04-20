@@ -1,27 +1,37 @@
 #!/usr/bin/env python3
-"""
-PDF Batch Renamer Module
+"""Batch-rename PDF files by splitting camelCase tokens into readable words.
 
-This module provides tools for batch renaming PDF files in a directory or directory tree.
-It supports customizable renaming patterns, preview/dry-run mode, and logging of changes.
+Parses each PDF filename, splits camelCase and acronym sequences into
+individual words, validates each word against an English dictionary (powered
+by ``pyspellchecker``), and reassembles a clean, human-readable filename.
+Processing runs in parallel across CPU cores for large batches.
 
-Features:
-- Batch renaming of PDF files
-- Customizable renaming rules
-- Dry-run mode for previewing changes
-- Logging of all renaming operations
-- Error handling for file conflicts
+Usage::
 
-Example:
-    >>> service = PdfBatchRenamingService()
-    >>> service.execute_renaming_process()
+    # Interactive (processes current directory)
+    cs-pdf-renamer
+
+    # Library usage
+    >>> from scripts.file_ops.pdf_batch_renamer import PdfBatchRenamingService
+    >>> PdfBatchRenamingService().execute_renaming_process()
+
+Dependencies:
+    pyspellchecker >= 0.7  (``pip install pyspellchecker``)
+
+Example::
+
+    $ cs-pdf-renamer
+    Processing /path/to/docs ...
+    Renamed: zkSNARKsAndBlockchain.pdf -> zk SNARKs And Blockchain.pdf
+    ...
 """
 
 import datetime
 import logging
+from multiprocessing import cpu_count
+from multiprocessing import Pool
 import os
 import re
-from multiprocessing import Pool, cpu_count
 from typing import List, Optional, Set
 
 from spellchecker import SpellChecker
@@ -47,11 +57,9 @@ class EnglishDictionaryProvider:
         Returns:
             Set of English words and specialized terms.
         """
-        # Load base dictionary from SpellChecker
         spell_checker: SpellChecker = SpellChecker()
         english_word_collection: Set[str] = set(spell_checker.word_frequency.keys())
 
-        # Add specialized technical terms
         technical_terms = {
             "zkSNARKS",
             "SNARKS",
@@ -64,7 +72,6 @@ class EnglishDictionaryProvider:
             "CRC",
         }
 
-        # Add Roman numerals
         roman_numerals = {
             "I",
             "II",
@@ -81,10 +88,8 @@ class EnglishDictionaryProvider:
             "XIII",
         }
 
-        # Convert technical terms to title case and add to dictionary
         technical_terms_title_case = set(term.title() for term in technical_terms)
 
-        # Update the dictionary with all additional terms
         english_word_collection.update(technical_terms_title_case)
         english_word_collection.update(roman_numerals)
 
@@ -209,39 +214,28 @@ class FilenameTransformationService:
         if not original_filename:
             raise ValueError("Filename cannot be empty.")
 
-        # Sanitize the filename
         sanitized_filename = self.sanitize_filename(original_filename)
 
-        # Replace "And" with "&"
         sanitized_filename = sanitized_filename.replace(" And ", " & ")
 
-        # Split the filename and extension
         base_filename, file_extension = os.path.splitext(sanitized_filename)
 
-        # Use regex to split the base filename into words based on various patterns
         extracted_words: List[str] = re.findall(
             r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)|[^\W_]+", base_filename
         )
 
-        # Apply title case rules
         for word_index, word in enumerate(extracted_words):
-            # First word is always capitalized
             if word_index == 0:
                 extracted_words[word_index] = word.title()
-            # Non-capitalized words remain lowercase unless they're not in the dictionary
             elif word.lower() in self.non_capitalized_words:
                 extracted_words[word_index] = word.lower()
-            # Words not in the dictionary are capitalized
             elif word.lower() not in self.english_word_collection:
                 extracted_words[word_index] = word.title()
-            # Other words follow title case
             else:
                 extracted_words[word_index] = word.title()
 
-        # Join the words with underscores
         transformed_base_filename = "_".join(extracted_words)
 
-        # Combine the base filename and extension
         transformed_filename = f"{transformed_base_filename}{file_extension}"
 
         return transformed_filename
@@ -271,7 +265,6 @@ class FileSystemOperationService:
             original_file_path = os.path.join(directory_path, original_filename)
             new_file_path = os.path.join(directory_path, new_filename)
 
-            # Skip if the paths are identical
             if original_file_path == new_file_path:
                 return False
 
@@ -353,13 +346,11 @@ class PdfBatchRenamingService:
         """
         self.target_directory_path = target_directory_path or os.getcwd()
 
-        # Generate log file path
         current_date = datetime.datetime.now().strftime("%Y-%m-%d")
         self.log_file_path = os.path.join(
             self.target_directory_path, f"rename_{current_date}.log"
         )
 
-        # Initialize component services
         self.dictionary_provider = EnglishDictionaryProvider()
         self.logging_service = LoggingConfigurationService()
         self.transformation_service = FilenameTransformationService(
@@ -368,7 +359,6 @@ class PdfBatchRenamingService:
         self.file_system_service = FileSystemOperationService()
         self.parallel_processing_service = ParallelProcessingService()
 
-        # Configure logging
         self.logging_service.configure_logging_system(self.log_file_path)
 
     def _rename_single_file(self, filename: str) -> None:
@@ -393,7 +383,6 @@ class PdfBatchRenamingService:
         Execute the PDF batch renaming process.
         """
         try:
-            # Find PDF files in the target directory
             pdf_files = self.file_system_service.find_pdf_files_in_directory(
                 self.target_directory_path
             )
@@ -404,7 +393,6 @@ class PdfBatchRenamingService:
 
             logging.info("Found %d PDF files to process", len(pdf_files))
 
-            # Process files in parallel
             self.parallel_processing_service.process_files_in_parallel(
                 self._rename_single_file, pdf_files
             )

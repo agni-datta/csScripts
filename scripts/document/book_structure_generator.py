@@ -1,30 +1,39 @@
 #!/usr/bin/env python3
+"""Generate a complete LaTeX book project directory structure.
+
+Creates the canonical three-part book layout (front matter / main matter /
+back matter) with empty ``.tex`` stub files for each section, plus a
+``main.tex`` root document and a set of modular ``.bib`` bibliography files.
+
+Usage::
+
+    # Interactive mode (prompts for chapter count and optional file selection)
+    cs-book-generator
+
+    # Library usage with a custom configuration
+    >>> from scripts.document.book_structure_generator import (
+    ...     BookStructureConfiguration, BookStructureGenerationService
+    ... )
+    >>> config = BookStructureConfiguration(number_of_chapters=12)
+    >>> BookStructureGenerationService(config).execute_generation_process()
+
+Running the script creates files relative to the *current working directory*,
+so change into your project root before invoking it.
+
+Example::
+
+    $ mkdir my-book && cd my-book
+    $ cs-book-generator
+    Enter 'm' for manual selection or press enter for full generation:
+    Enter number of chapters: 8
+    Created front-matter/half_title.tex
+    ...
+    Generated main.tex
 """
-Book Structure Generator Module
 
-This module provides tools for creating and managing the file structure of a LaTeX book project.
-It automates the creation of chapters, sections, and other organizational files needed for
-academic book writing and publishing workflows.
-
-Features:
-- Automated directory and file creation for LaTeX book projects
-- Customizable templates for chapters and sections with front/back matter
-- Interactive and batch file generation modes
-- Command-line interface and library usage
-- Modular bibliography file generation
-- LaTeX document structure with proper matter separation
-
-Example:
-    >>> generator = BookStructureGenerationService()
-    >>> generator.execute_generation_process()  # Interactive mode
-    >>> # Or use as library:
-    >>> config = BookStructureConfiguration(number_of_chapters=10)
-    >>> generator = BookStructureGenerationService(config)
-    >>> generator.execute_generation_process()
-"""
-
+from dataclasses import dataclass
+from dataclasses import field
 import os
-from dataclasses import dataclass, field
 from typing import List
 
 
@@ -239,33 +248,27 @@ class LatexDocumentGenerator:
         with open("main.tex", "w") as main_file:
             write_line = main_file.write
 
-            # Document preamble
             write_line("\\documentclass{book}\n")
             write_line("\\usepackage{csbook}\n")
             write_line("\\begin{document}\n")
 
-            # Front matter
             write_line("\\frontmatter\n")
             for file_name in front_matter_files:
                 write_line(f"\\input{{front-matter/{file_name}}}\n")
 
-            # Main matter
             write_line("\\mainmatter\n")
             for file_name in chapter_files:
                 write_line(f"\\input{{main-matter/{file_name}}}\n")
 
-            # Back matter
             write_line("\\backmatter\n")
             for file_name in back_matter_files:
                 write_line(f"\\input{{back-matter/{file_name}}}\n")
 
-            # Bibliography
             write_line("\\bibliographystyle{plain}\n")
             write_line(
                 "\\bibliography{references,further_reading,bibliography,additional,manual}\n"
             )
 
-            # End document
             write_line("\\end{document}\n")
 
         print("Generated main.tex")
@@ -322,7 +325,6 @@ class BookStructureGenerationService:
         """
         Execute the complete book structure generation process.
         """
-        # Get user preferences if not already set
         if not hasattr(self, "configuration") or self.configuration is None:
             self.configuration = BookStructureConfiguration()
 
@@ -333,7 +335,6 @@ class BookStructureGenerationService:
             self.user_interaction_service.prompt_for_chapter_count()
         )
 
-        # Select files based on user preferences or use all files
         front_matter_files = (
             self.user_interaction_service.prompt_for_file_selection(
                 self.configuration.front_matter
@@ -352,7 +353,6 @@ class BookStructureGenerationService:
 
         chapter_files = self.configuration.generate_chapter_file_names()
 
-        # Create all necessary files
         self.file_system_service.create_multiple_empty_files(
             self._prepare_file_paths_with_directory(chapter_files, "main-matter")
         )
@@ -365,7 +365,6 @@ class BookStructureGenerationService:
             self._prepare_file_paths_with_directory(back_matter_files, "back-matter")
         )
 
-        # Generate bibliography and main tex files
         self.latex_document_generator.generate_bibliography_files()
         self.latex_document_generator.generate_main_tex_file(
             front_matter_files, chapter_files, back_matter_files

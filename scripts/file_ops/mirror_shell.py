@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 mirror_shell.py
 
@@ -53,15 +52,13 @@ import cmd
 import datetime as _dt
 import json
 import os
+from pathlib import Path
 import shlex
 import shutil
 import signal
 import subprocess
 import sys
-from pathlib import Path
 from typing import Iterable, List, Optional, Tuple
-
-# ----------------------------- Core Utils -----------------------------
 
 
 class Sys:
@@ -150,9 +147,6 @@ class Sys:
             return False
 
 
-# ----------------------------- Logging -----------------------------
-
-
 class Log:
     """Session logger."""
 
@@ -183,9 +177,6 @@ class Log:
             self._fh.close()
         except Exception:
             pass
-
-
-# ----------------------------- Disk/Env Inspectors -----------------------------
 
 
 class RcloneError(RuntimeError):
@@ -284,7 +275,6 @@ class Mounts:
         for n in data.get("blockdevices", []):
             walk(n)
 
-        # Fallback scan of common roots.
         for root in ("/media", "/run/media", "/mnt"):
             r = Path(root)
             if r.exists():
@@ -292,7 +282,6 @@ class Mounts:
                     if os.path.ismount(str(p)) and str(p) not in {m[0] for m in out}:
                         out.append((str(p), "?", 1, 1, "?"))
 
-        # Dedupe and sort.
         uniq = {m[0]: m for m in out}
         return sorted(uniq.values(), key=lambda t: t[0])
 
@@ -327,9 +316,6 @@ class Capacity:
         """
         total, used, free = shutil.disk_usage(str(mount_point))
         return int(total), int(used), int(free)
-
-
-# ----------------------------- Rclone Runner -----------------------------
 
 
 class RcloneRunner:
@@ -431,9 +417,6 @@ class RcloneRunner:
             proc.terminate()
         finally:
             return proc.wait()
-
-
-# ----------------------------- Session Model -----------------------------
 
 
 class MirrorConfig:
@@ -655,9 +638,6 @@ class MirrorSession:
         return "\n".join(lines)
 
 
-# ----------------------------- Interactive Shell -----------------------------
-
-
 class MirrorShell(cmd.Cmd):
     """Interactive command shell for mirroring."""
 
@@ -673,8 +653,6 @@ class MirrorShell(cmd.Cmd):
         super().__init__()
         self.s = session
 
-    # ---------- help override ----------
-
     def do_help(self, arg: str) -> None:  # noqa: D401
         """Show help for a command or the full program help.
 
@@ -685,8 +663,6 @@ class MirrorShell(cmd.Cmd):
             print(__doc__.strip())
         else:
             super().do_help(arg)
-
-    # ---------- utility ----------
 
     @staticmethod
     def _print_table(headers: Iterable[str], rows: Iterable[Iterable[str]]) -> None:
@@ -707,8 +683,6 @@ class MirrorShell(cmd.Cmd):
         print(fmt.format(*["-" * w for w in widths]))
         for r in data:
             print(fmt.format(*r))
-
-    # ---------- commands ----------
 
     def do_show(self, arg: str) -> None:
         """show
@@ -883,9 +857,6 @@ class MirrorShell(cmd.Cmd):
         """
         print()
         return self.do_quit(arg)
-
-
-# ----------------------------- Entrypoint -----------------------------
 
 
 def main() -> int:

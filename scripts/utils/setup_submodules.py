@@ -13,13 +13,13 @@ Example:
 
 import argparse
 import csv
+from enum import Enum
 import logging
+from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
-from enum import Enum
-from pathlib import Path
 from typing import Dict, List, Optional, Type, TypeVar
 
 # Catppuccin color palette for terminal output
@@ -634,7 +634,6 @@ class CommandLineInterface:
         """Parse command-line arguments and execute the selected command."""
         parser = self._create_argument_parser()
         args = parser.parse_args()
-        # Set log level based on --log-catppuccin flag
         log_level = logging.INFO
         if getattr(args, "log_catppuccin", False):
             log_level = logging.DEBUG

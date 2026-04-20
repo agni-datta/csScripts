@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
-"""
-Git Repository Reset Module
+"""Reset multiple Git repositories to a clean, up-to-date state.
 
-This module provides a utility for safely resetting a Git repository to a clean state.
-It automates the process of pulling the latest changes, discarding local modifications,
-and cleaning untracked files and directories.
+Recursively discovers Git repositories under a root directory and for each
+one runs ``git pull`` followed by ``git reset --hard HEAD`` and
+``git clean -fd`` to discard all local modifications and untracked files.
 
-Features:
-- Automated git pull and reset
-- Cleans untracked files and directories
-- Command-line interface for repository management
-- Logging and error handling
+Useful for restoring a collection of project clones to a known-good baseline
+after experiments or accidental edits.
 
-Example:
-    >>> service = GitRepositoryResetService("/path/to/repo")
-    >>> service.execute_repository_reset_process()
+Usage::
+
+    # Reset all repos under the current directory (interactive confirmation)
+    python -m scripts.utils.git_repository_reset
+
+    # Library usage
+    >>> from scripts.utils.git_repository_reset import GitRepositoryResetService
+    >>> GitRepositoryResetService("/path/to/repos").execute_repository_reset_process()
+
+Example::
+
+    $ python -m scripts.utils.git_repository_reset
+    Found 4 git repositories.
+    Reset /home/user/projects/repo-a ... done
+    Reset /home/user/projects/repo-b ... done
 """
 
 import os
@@ -70,7 +78,6 @@ class GitCommandExecutionService:
             bool: True if commands executed successfully, False otherwise.
         """
         try:
-            # Execute git reset --hard
             subprocess.run(
                 ["git", "reset", "--hard"],
                 cwd=repository_directory_path,
@@ -78,7 +85,6 @@ class GitCommandExecutionService:
                 capture_output=True,
             )
 
-            # Execute git pull
             subprocess.run(
                 ["git", "pull"],
                 cwd=repository_directory_path,
@@ -167,7 +173,6 @@ class GitRepositoryResetService:
         """
         Execute the complete repository reset process.
         """
-        # Discover Git repositories
         discovered_repository_paths = (
             self.repository_discovery_service.discover_git_repositories(
                 self.target_directory_path
@@ -180,7 +185,6 @@ class GitRepositoryResetService:
 
         print(f"Found {len(discovered_repository_paths)} Git repositories to process")
 
-        # Process each repository
         for repository_path in discovered_repository_paths:
             operation_success = (
                 self.command_execution_service.execute_hard_reset_and_pull(
@@ -189,7 +193,6 @@ class GitRepositoryResetService:
             )
             self.result_tracker.record_operation_result(operation_success)
 
-        # Display summary
         print("\n" + self.result_tracker.get_operation_summary())
 
 

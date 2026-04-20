@@ -1,28 +1,38 @@
 #!/usr/bin/env python3
+"""Batch-sign PDF files with a GPG detached signature.
+
+Recursively discovers every ``.pdf`` file under a target directory (default:
+the current working directory), presents the available GPG secret keys for
+selection, and generates a ``.pdf.sig`` detached signature file alongside
+each PDF.
+
+Usage::
+
+    # Sign all PDFs in the current directory
+    python -m scripts.document.pdf_gpg_signer
+
+    # Library usage
+    >>> from scripts.document.pdf_gpg_signer import PdfGpgSigningService
+    >>> PdfGpgSigningService(target_directory_path="/path/to/docs").execute_signing_process()
+
+Dependencies:
+    gpg (GnuPG) must be installed and a secret key must be available in the
+    keyring.  Install with ``brew install gnupg`` or ``sudo apt install gnupg``.
+
+Example::
+
+    $ python -m scripts.document.pdf_gpg_signer
+    Available GPG secret keys:
+    [0] ABCDEF1234567890 - Alice Example <alice@example.com>
+    Enter the number of the key to use for signing: 0
+    Signing paper.pdf -> paper.pdf.sig
+    Signed: paper.pdf.sig
+    Signing complete: 1 files signed successfully, 0 files failed.
 """
-PDF GPG Signer Module
 
-This module provides functionality to sign PDF files using GPG (GNU Privacy Guard).
-It automates the process of finding PDF files and applying digital signatures to them.
-
-Features:
-- GPG installation verification
-- Interactive GPG key selection
-- Recursive PDF file discovery
-- Batch signing of multiple files
-- Detailed operation feedback
-
-Usage:
-    python3 sign_pdfs_with_gpg.py
-
-Example:
-    >>> service = PdfGpgSigningService()
-    >>> service.execute_signing_process()
-"""
-
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 from typing import Dict, List
 
 
@@ -213,7 +223,6 @@ class PdfGpgSigningService:
         self.target_directory_path = Path(target_directory_path)
         self.selected_key_id = None
 
-        # Initialize component services
         self.installation_verifier = GpgInstallationVerifier()
         self.key_management_service = GpgKeyManagementService()
         self.user_interaction_service = UserInteractionService()
@@ -224,14 +233,12 @@ class PdfGpgSigningService:
         """
         Execute the complete PDF signing process.
         """
-        # Verify GPG installation
         if not self.installation_verifier.verify_gpg_installation():
             self.user_interaction_service.display_message(
                 "GPG is not installed. Please install GPG and try again."
             )
             sys.exit(1)
 
-        # Get available GPG keys
         available_keys = self.key_management_service.retrieve_available_gpg_keys()
         if not available_keys:
             self.user_interaction_service.display_message(
@@ -239,13 +246,11 @@ class PdfGpgSigningService:
             )
             sys.exit(1)
 
-        # Display keys and get user selection
         self.user_interaction_service.display_available_keys(available_keys)
         self.selected_key_id = self.user_interaction_service.prompt_for_key_selection(
             available_keys
         )
 
-        # Find PDF files
         pdf_files = self.file_discovery_service.find_pdf_files_recursively(
             self.target_directory_path
         )
@@ -253,7 +258,6 @@ class PdfGpgSigningService:
             self.user_interaction_service.display_message("No PDF files found to sign.")
             return
 
-        # Sign each PDF file
         successful_count = 0
         failed_count = 0
 
@@ -265,7 +269,6 @@ class PdfGpgSigningService:
             else:
                 failed_count += 1
 
-        # Display summary
         self.user_interaction_service.display_message(
             f"\nSigning complete: {successful_count} files signed successfully, {failed_count} files failed."
         )
