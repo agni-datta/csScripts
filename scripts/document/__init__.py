@@ -6,6 +6,7 @@ and other document-related tasks in academic and research workflows.
 
 Components:
 - LaTeX document generation and compilation
+- LaTeX intermediate file cleaning via .gitignore patterns (latex_gitignore_cleaner)
 - PDF processing and optimization
 - Document structure management
 - Bibliography and reference handling

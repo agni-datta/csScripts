@@ -4,7 +4,7 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "csScripts"
-version = "1.1.0"
+version = "1.2.0"
 description = "Utility scripts for academic and research workflows"
 readme = "README.md"
 license = { text = "MIT" }
@@ -64,6 +64,7 @@ cs-code-formatter = "scripts.utils.code_formatter:main"
 cs-check-british = "scripts.document.check_british:main"
 cs-check-grammar = "scripts.document.check_grammar:main"
 cs-check-spelling = "scripts.document.check_spelling:main"
+cs-latex-gitignore-cleaner = "scripts.document.latex_gitignore_cleaner:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
