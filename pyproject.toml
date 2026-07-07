@@ -29,16 +29,16 @@ dependencies = [
     "colorama>=0.4.4",
     # PDF analysis
     "PyPDF2>=3.0",
-    "pymupdf>=1.23",           # fitz – font/span extraction in pdf_meta_analyzer
-    "rich>=13.0",              # terminal tables in pdf_meta_analyzer
+    "pymupdf>=1.23", # fitz – font/span extraction in pdf_meta_analyzer
+    "rich>=13.0",    # terminal tables in pdf_meta_analyzer
     # Spell / grammar checking
-    "pyspellchecker>=0.7",     # British-spelling and spell-check backends
-    "language-tool-python>=2.7",  # Grammar checking via local LanguageTool server
-    "pylatexenc>=2.10",        # LaTeX → plain-text stripping for grammar checker
+    "pyspellchecker>=0.7",       # British-spelling and spell-check backends
+    "language-tool-python>=2.7", # Grammar checking via local LanguageTool server
+    "pylatexenc>=2.10",          # LaTeX → plain-text stripping for grammar checker
     # File renaming
-    "titlecase>=2.4",          # Title-case transformation in case_sensitive_file_renamer
+    "titlecase>=2.4", # Title-case transformation in case_sensitive_file_renamer
     # Archive compression
-    "tqdm>=4.64",              # Progress bar in folder_compressor
+    "tqdm>=4.64", # Progress bar in folder_compressor
 ]
 
 [project.optional-dependencies]
@@ -50,10 +50,7 @@ dev = [
     "ruff>=0.4",
     "mypy>=1.0",
 ]
-image = [
-    "Pillow>=10.0",
-    "numpy>=1.24",
-]
+image = ["Pillow>=10.0", "numpy>=1.24"]
 
 [project.scripts]
 cs-book-generator = "scripts.document.book_structure_generator:main"
