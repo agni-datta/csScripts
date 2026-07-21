@@ -1,16 +1,18 @@
 ---
-title: README
-aliases: README
-linter-yaml-title-alias: README
+title: "csScripts"
+aliases: "csScripts"
+linter-yaml-title-alias: "csScripts"
 date created: Monday, April 20th 2026, 10:44:03 pm
-date modified: Monday, April 20th 2026, 11:10:42 pm
+date modified: 2026-07-21
 ---
 
-## csScripts
+<!-- @format -->
 
-Utility scripts for academic and research workflows—LaTeX document management, file operations, and productivity automation. Written in Python 3.10+ following Google style with full type hints.
+# csScripts
 
-### Directory Structure
+Python 3.10+ utilities for LaTeX projects, file operations, and research workflows. The package exposes typed modules and selected command-line entry points.
+
+## Directory Structure
 
 ```
 csScripts/
@@ -65,22 +67,22 @@ csScripts/
     └── test_remove_comments.py
 ```
 
-### Requirements
+## Requirements
 
 - Python 3.10+
 - External tools (where applicable): `aspell`, `latexmk`, `qpdf`, `ghostscript`, `rclone`, `7z`, `gpg`, `black`, `isort`
 
-### Installation
+## Installation
 
 ```bash
-git clone https://github.com/your-username/csScripts.git
+git clone https://github.com/agni-datta/csScripts.git
 cd csScripts
 pip install -e .
-# with dev tools:
+# Install development dependencies
 pip install -e ".[dev]"
 ```
 
-### CLI Entry Points
+## CLI Entry Points
 
 | Command | Script |
 | --- | --- |
@@ -93,7 +95,7 @@ pip install -e ".[dev]"
 | `cs-check-grammar` | `scripts/document/check_grammar.py` |
 | `cs-check-spelling` | `scripts/document/check_spelling.py` |
 
-### Usage Examples
+## Usage Examples
 
 ```bash
 # Check a LaTeX project for British spellings
@@ -109,7 +111,7 @@ cs-file-renamer /path/to/dir
 cs-code-formatter /path/to/project
 ```
 
-### Development
+## Development
 
 ```bash
 # Run tests
@@ -126,6 +128,6 @@ ruff check scripts/ tests/
 mypy scripts/
 ```
 
-### License
+## License
 
-MIT—see [LICENSE](LICENSE).
+[MIT](LICENSE) applies.
